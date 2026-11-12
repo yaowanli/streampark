@@ -706,7 +706,7 @@ public class FlinkApplicationActionServiceImpl
                 FlinkSql flinkCDC = flinkSqlService.getEffective(application.getId(), false);
                 AssertUtils.notNull(flinkCDC);
                 // 1) dist_userJar
-                String cdcDistJar = ServiceHelper.getFlinkCDCClientJar(flinkEnv);
+                String cdcDistJar = ServiceHelper.getFlinkCDCClientJar(flinkEnv, application);
                 // 2) appConfig
                 appConf =
                     applicationConfig == null

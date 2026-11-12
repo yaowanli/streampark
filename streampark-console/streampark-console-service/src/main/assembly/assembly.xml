@@ -31,7 +31,10 @@
             <outputDirectory>lib</outputDirectory>
             <excludes>
                 <exclude>org.apache.streampark:streampark-flink-sqlclient</exclude>
-                <exclude>org.apache.streampark:streampark-flink-cdcclient</exclude>
+                <exclude>org.apache.streampark:streampark-flink-cdcclient-cdc32</exclude>
+                <exclude>org.apache.streampark:streampark-flink-cdcclient-cdc33</exclude>
+                <exclude>org.apache.streampark:streampark-flink-cdcclient-cdc34</exclude>
+                <exclude>org.apache.streampark:streampark-flink-cdcclient-cdc35</exclude>
                 <exclude>org.apache.streampark:streampark-spark-sqlclient_${scala.binary.version}</exclude>
                 <exclude>javax.servlet:servlet-api</exclude>
             </excludes>
@@ -40,7 +43,10 @@
             <outputDirectory>client</outputDirectory>
             <includes>
                 <include>org.apache.streampark:streampark-flink-sqlclient</include>
-                <include>org.apache.streampark:streampark-flink-cdcclient</include>
+                <include>org.apache.streampark:streampark-flink-cdcclient-cdc32</include>
+                <include>org.apache.streampark:streampark-flink-cdcclient-cdc33</include>
+                <include>org.apache.streampark:streampark-flink-cdcclient-cdc34</include>
+                <include>org.apache.streampark:streampark-flink-cdcclient-cdc35</include>
                 <include>org.apache.streampark:streampark-spark-sqlclient_${scala.binary.version}</include>
             </includes>
         </dependencySet>
