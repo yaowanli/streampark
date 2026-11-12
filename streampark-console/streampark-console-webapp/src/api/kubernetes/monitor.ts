@@ -42,10 +42,14 @@ const get = <T>(url: string, params: Recordable) => defHttp.get<T>({ url, params
 export const fetchK8sOverview = (clusterId: number | string) =>
   get<ClusterOverview>(K8S_MONITOR_API.OVERVIEW, { clusterId });
 
-export const fetchK8sNodes = (clusterId: number | string) => get<K8sNode[]>(K8S_MONITOR_API.NODES, { clusterId });
+export const fetchK8sNodes = (clusterId: number | string) =>
+  get<K8sNode[]>(K8S_MONITOR_API.NODES, { clusterId });
 
-export const fetchK8sDeployments = (clusterId: number | string, namespace?: string, keyword?: string) =>
-  get<K8sDeployment[]>(K8S_MONITOR_API.WORKLOADS, { clusterId, namespace, keyword });
+export const fetchK8sDeployments = (
+  clusterId: number | string,
+  namespace?: string,
+  keyword?: string,
+) => get<K8sDeployment[]>(K8S_MONITOR_API.WORKLOADS, { clusterId, namespace, keyword });
 
 export const fetchK8sPods = (clusterId: number | string, namespace?: string, keyword?: string) =>
   get<K8sPod[]>(K8S_MONITOR_API.PODS, { clusterId, namespace, keyword });

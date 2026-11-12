@@ -15,7 +15,15 @@
   limitations under the License.
 -->
 <template>
-  <BasicModal :width="700" v-bind="$attrs" centered destroyOnClose @register="registerModal" showFooter @ok="handleSubmit">
+  <BasicModal
+    :width="700"
+    v-bind="$attrs"
+    centered
+    destroyOnClose
+    @register="registerModal"
+    showFooter
+    @ok="handleSubmit"
+  >
     <template #title>
       <Icon icon="ant-design:cluster-outlined" />
       {{ getTitle }}
@@ -34,7 +42,11 @@
   import { defineComponent, computed, ref } from 'vue';
   import { BasicForm, FormSchema, useForm } from '/@/components/Form';
   import { BasicModal, useModalInner } from '/@/components/Modal';
-  import { fetchK8sClusterCreate, fetchK8sClusterTest, fetchK8sClusterUpdate } from '/@/api/kubernetes/cluster';
+  import {
+    fetchK8sClusterCreate,
+    fetchK8sClusterTest,
+    fetchK8sClusterUpdate,
+  } from '/@/api/kubernetes/cluster';
   import { useI18n } from '/@/hooks/web/useI18n';
   import { useMessage } from '/@/hooks/web/useMessage';
   import Icon from '/@/components/Icon';
@@ -90,14 +102,16 @@
         baseColProps: { span: 22, offset: 1 },
       });
 
-      const [registerModal, { setModalProps, closeModal }] = useModalInner(async (data: Recordable) => {
-        resetFields();
-        setModalProps({ confirmLoading: false });
-        isUpdate.value = !!data?.isUpdate;
-        if (isUpdate.value) {
-          await setFieldsValue(data.record);
-        }
-      });
+      const [registerModal, { setModalProps, closeModal }] = useModalInner(
+        async (data: Recordable) => {
+          resetFields();
+          setModalProps({ confirmLoading: false });
+          isUpdate.value = !!data?.isUpdate;
+          if (isUpdate.value) {
+            await setFieldsValue(data.record);
+          }
+        },
+      );
 
       const getTitle = computed(() =>
         !isUpdate.value ? t('kubernetes.cluster.create') : t('kubernetes.cluster.modify'),

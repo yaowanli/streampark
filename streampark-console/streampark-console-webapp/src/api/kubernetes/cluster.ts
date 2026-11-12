@@ -41,7 +41,10 @@ export function fetchK8sClusterUpdate(data: Recordable) {
 }
 
 export function fetchK8sClusterDelete(id: number | string): Promise<AxiosResponse<Result>> {
-  return defHttp.post({ url: K8S_CLUSTER_API.DELETE, data: { id } }, { isReturnNativeResponse: true });
+  return defHttp.post(
+    { url: K8S_CLUSTER_API.DELETE, data: { id } },
+    { isReturnNativeResponse: true },
+  );
 }
 
 export function fetchK8sClusterTest(data: Recordable) {

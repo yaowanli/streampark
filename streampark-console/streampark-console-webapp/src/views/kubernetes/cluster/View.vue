@@ -105,7 +105,15 @@
         reload();
       }
 
-      return { registerTable, registerModal, handleCreate, handleEdit, handleDelete, handleSuccess, t };
+      return {
+        registerTable,
+        registerModal,
+        handleCreate,
+        handleEdit,
+        handleDelete,
+        handleSuccess,
+        t,
+      };
     },
   });
 </script>
