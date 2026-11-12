@@ -314,6 +314,7 @@ export const useAppTableAction = (
               { label: 'JAR', value: JobTypeEnum.JAR },
               { label: 'SQL', value: JobTypeEnum.SQL },
               { label: 'PYFLINK', value: JobTypeEnum.PYFLINK },
+              { label: 'FLINK CDC', value: JobTypeEnum.CDC },
             ],
             onChange: handlePageDataReload.bind(null, false),
           },

@@ -465,7 +465,7 @@
       <TabPane
         key="4"
         :tab="t('flink.app.detail.detailTab.detailTabName.flinkSql')"
-        v-if="app.jobType === JobTypeEnum.SQL"
+        v-if="app.jobType === JobTypeEnum.SQL || app.jobType === JobTypeEnum.CDC"
       >
         <BasicTable @register="registerFlinkSqlTable">
           <template #bodyCell="{ column, record }">

@@ -70,7 +70,8 @@ public final class YarnApplicationClient extends AbstractYarnClient {
         providedLibs.add(hdfsWorkspace.flinkPlugins());
         providedLibs.add(hdfsWorkspace.appJars());
 
-        if (submitRequest.jobType() == FlinkJobType.FLINK_SQL) {
+        if (submitRequest.jobType() == FlinkJobType.FLINK_SQL
+            || submitRequest.jobType() == FlinkJobType.FLINK_CDC) {
             providedLibs.add(
                 WORKSPACE.shims + "/flink-" + submitRequest.flinkVersion().majorVersion());
             String jobLib = WORKSPACE.workspace + "/" + submitRequest.id() + "/lib";

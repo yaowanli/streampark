@@ -172,7 +172,7 @@ public class FlinkApplicationBuildPipelineServiceImpl
             return true;
         }
         // rollback
-        if (app.isNeedRollback() && app.isFlinkSqlJob()) {
+        if (app.isNeedRollback() && app.isFlinkSqlJobOrCDC()) {
             flinkSqlService.rollback(app);
         }
 
@@ -180,7 +180,9 @@ public class FlinkApplicationBuildPipelineServiceImpl
         FlinkSql newFlinkSql = flinkSqlService.getCandidate(app.getId(), CandidateTypeEnum.NEW);
         FlinkSql effectiveFlinkSql = flinkSqlService.getEffective(app.getId(), false);
         FlinkJobType jobType = app.getJobTypeEnum();
-        if (jobType == FlinkJobType.FLINK_SQL || jobType == FlinkJobType.PYFLINK) {
+        if (jobType == FlinkJobType.FLINK_SQL
+            || jobType == FlinkJobType.PYFLINK
+            || jobType == FlinkJobType.FLINK_CDC) {
             FlinkSql flinkSql = newFlinkSql == null ? effectiveFlinkSql : newFlinkSql;
             AssertUtils.notNull(flinkSql);
             app.setDependency(flinkSql.getDependency());
@@ -241,7 +243,7 @@ public class FlinkApplicationBuildPipelineServiceImpl
                         ApplicationBuildPipelineUtils.applySuccessfulRelease(
                             app,
                             () -> {
-                                if (app.isFlinkSqlJob()) {
+                                if (app.isFlinkSqlJobOrCDC()) {
                                     applicationManageService.toEffective(app);
                                 } else if (app.isStreamParkType()) {
                                     FlinkApplicationConfig config =
@@ -254,7 +256,7 @@ public class FlinkApplicationBuildPipelineServiceImpl
                                 }
                             });
                         if (!app.isNeedRollback()) {
-                            if (app.isFlinkSqlJob() && newFlinkSql != null) {
+                            if (app.isFlinkSqlJobOrCDC() && newFlinkSql != null) {
                                 backUpService.backup(app, newFlinkSql);
                             } else {
                                 backUpService.backup(app, null);
@@ -361,7 +363,10 @@ public class FlinkApplicationBuildPipelineServiceImpl
         }
 
         FlinkDeployMode deployModeEnum = app.getDeployModeEnum();
-        String mainClass = Constants.STREAMPARK_FLINKSQL_CLIENT_CLASS;
+        String mainClass =
+            FlinkJobType.FLINK_CDC == app.getJobTypeEnum()
+                ? Constants.STREAMPARK_FLINKCDC_CLIENT_CLASS
+                : Constants.STREAMPARK_FLINKSQL_CLIENT_CLASS;
         switch (deployModeEnum) {
             case YARN_APPLICATION:
                 String yarnProvidedPath = app.getAppLib();
@@ -506,6 +511,13 @@ public class FlinkApplicationBuildPipelineServiceImpl
                     return String.format("%s/%s", clientPath, sqlDistJar);
                 }
                 return Workspace.LOCAL.client.concat("/").concat(sqlDistJar);
+            case FLINK_CDC:
+                String cdcDistJar = ServiceHelper.getFlinkCDCClientJar(flinkEnv);
+                if (app.getDeployModeEnum() == FlinkDeployMode.YARN_APPLICATION) {
+                    String clientPath = Workspace.REMOTE.client;
+                    return String.format("%s/%s", clientPath, cdcDistJar);
+                }
+                return Workspace.LOCAL.client.concat("/").concat(cdcDistJar);
             default:
                 throw new UnsupportedOperationException(
                     "[StreamPark] unsupported JobType: " + app.getJobTypeEnum());

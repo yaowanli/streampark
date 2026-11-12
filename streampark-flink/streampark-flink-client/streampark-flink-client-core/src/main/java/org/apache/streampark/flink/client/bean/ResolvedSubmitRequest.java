@@ -154,6 +154,9 @@ public final class ResolvedSubmitRequest {
         if (request.jobType() == FlinkJobType.FLINK_SQL) {
             return Constants.STREAMPARK_FLINKSQL_CLIENT_CLASS;
         }
+        if (request.jobType() == FlinkJobType.FLINK_CDC) {
+            return Constants.STREAMPARK_FLINKCDC_CLIENT_CLASS;
+        }
         if (request.jobType() == FlinkJobType.PYFLINK) {
             return Constants.PYTHON_FLINK_DRIVER_CLASS_NAME;
         }

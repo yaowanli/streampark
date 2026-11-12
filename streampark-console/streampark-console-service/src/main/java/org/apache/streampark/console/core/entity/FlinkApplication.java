@@ -445,6 +445,8 @@ public class FlinkApplication extends BaseEntity implements ApplicationEntitySup
         switch (flinkJobType) {
             case FLINK_SQL:
                 return Constants.STREAMPARK_FLINKSQL_CLIENT_CLASS;
+            case FLINK_CDC:
+                return Constants.STREAMPARK_FLINKCDC_CLIENT_CLASS;
             case PYFLINK:
                 return Constants.PYTHON_FLINK_DRIVER_CLASS_NAME;
             case FLINK_JAR:
@@ -481,6 +483,12 @@ public class FlinkApplication extends BaseEntity implements ApplicationEntitySup
     @JsonIgnore
     public boolean isFlinkSqlJob() {
         return FlinkJobType.FLINK_SQL.getMode().equals(this.getJobType());
+    }
+
+    /** Returns whether this application runs Flink SQL or a Flink CDC YAML pipeline. */
+    @JsonIgnore
+    public boolean isFlinkSqlJobOrCDC() {
+        return isFlinkSqlJob() || FlinkJobType.FLINK_CDC.getMode().equals(this.getJobType());
     }
 
     @JsonIgnore

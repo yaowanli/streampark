@@ -35,6 +35,8 @@
   import { format } from '../FlinkSqlFormatter';
   import { useI18n } from '/@/hooks/web/useI18n';
   import { useFullContent } from '/@/hooks/event/useFullscreen';
+  import { JobTypeEnum } from '/@/enums/flinkEnum';
+  import YAML from 'js-yaml';
   const ButtonGroup = Button.Group;
   const { t } = useI18n();
 
@@ -65,14 +67,33 @@
       type: Array as PropType<Array<{ text: string; description: string }>>,
       default: () => [],
     },
+    jobType: {
+      type: Number,
+    },
   });
   const defaultValue = '';
 
   /* verify */
   async function handleVerifySql() {
     if (isEmpty(props.value)) {
-      verifyRes.errorMsg = 'empty sql';
+      verifyRes.errorMsg = props.jobType === JobTypeEnum.CDC ? 'empty yaml' : 'empty sql';
       return false;
+    }
+
+    if (props.jobType === JobTypeEnum.CDC) {
+      try {
+        YAML.load(props.value);
+        verifyRes.verified = true;
+        verifyRes.errorMsg = '';
+        syntaxError();
+        return true;
+      } catch (error) {
+        verifyRes.errorStart = 0;
+        verifyRes.errorEnd = 0;
+        verifyRes.errorMsg = `${error.name}: ${error.reason} at line ${error.mark.line}, column ${error.mark.column}`;
+        syntaxError();
+        return false;
+      }
     }
 
     if (!props.versionId) {
@@ -218,7 +239,13 @@
         <Icon icon="ant-design:eye-outlined" />
         {{ t('flink.app.flinkSql.preview') }}
       </a-button>
-      <a-button class="flinksql-tool-item" size="small" type="default" @click="handleFormatSql">
+      <a-button
+        class="flinksql-tool-item"
+        size="small"
+        type="default"
+        @click="handleFormatSql"
+        v-if="props.jobType !== JobTypeEnum.CDC"
+      >
         <Icon icon="ant-design:thunderbolt-outlined" />
         {{ t('flink.app.flinkSql.format') }}
       </a-button>
@@ -249,7 +276,12 @@
             {{ t('flink.app.flinkSql.preview') }}
           </div>
         </a-button>
-        <a-button type="default" @click="handleFormatSql" class="ml-10px">
+        <a-button
+          type="default"
+          @click="handleFormatSql"
+          class="ml-10px"
+          v-if="props.jobType !== JobTypeEnum.CDC"
+        >
           <div class="flex items-center">
             <Icon icon="ant-design:thunderbolt-outlined" />
             {{ t('flink.app.flinkSql.format') }}

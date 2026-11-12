@@ -68,8 +68,9 @@ public final class FlinkJobGraphBuilder {
 
         if (request.jobType() != FlinkJobType.PYFLINK) {
             builder.setJarFile(jarFile);
-            boolean flinkSqlJob = request.jobType() == FlinkJobType.FLINK_SQL;
-            builder.setUserClassPaths(userClassPaths(resolved, !flinkSqlJob));
+            boolean streamParkManagedJob = request.jobType() == FlinkJobType.FLINK_SQL
+                || request.jobType() == FlinkJobType.FLINK_CDC;
+            builder.setUserClassPaths(userClassPaths(resolved, !streamParkManagedJob));
             builder.setConfiguration(parentFirstConfiguration());
         }
 

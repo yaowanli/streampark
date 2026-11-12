@@ -39,6 +39,8 @@ public class ServiceHelper {
 
     private static String flinkSqlClientJar = null;
 
+    private static String flinkCDCClientJar = null;
+
     private static String sparkSqlClientJar = null;
 
     public static User getLoginUser() {
@@ -60,26 +62,35 @@ public class ServiceHelper {
 
     public static String getFlinkSqlClientJar(FlinkEnv flinkEnv) {
         if (flinkSqlClientJar == null) {
-            File localClient = WebUtils.getAppClientDir();
-            ApiAlertException.throwIfFalse(
-                localClient.exists(), "[StreamPark] " + localClient + " no exists. please check.");
-
-            String regex = "streampark-flink-sqlclient-.*\\.jar";
-
-            List<String> jars = Arrays.stream(Objects.requireNonNull(localClient.list()))
-                .filter(x -> x.matches(regex))
-                .collect(Collectors.toList());
-
-            ApiAlertException.throwIfTrue(
-                jars.isEmpty(),
-                "[StreamPark] can't found streampark-flink-sqlclient jar in " + localClient);
-
-            ApiAlertException.throwIfTrue(
-                jars.size() > 1,
-                "[StreamPark] found multiple streampark-flink-sqlclient jar in " + localClient);
-            flinkSqlClientJar = jars.get(0);
+            flinkSqlClientJar = findClientJar(
+                "streampark-flink-sqlclient-.*\\.jar", "streampark-flink-sqlclient");
         }
         return flinkSqlClientJar;
+    }
+
+    public static String getFlinkCDCClientJar(FlinkEnv flinkEnv) {
+        if (flinkCDCClientJar == null) {
+            flinkCDCClientJar = findClientJar(
+                "streampark-flink-cdcclient-.*\\.jar", "streampark-flink-cdcclient");
+        }
+        return flinkCDCClientJar;
+    }
+
+    private static String findClientJar(String regex, String jarName) {
+        File localClient = WebUtils.getAppClientDir();
+        ApiAlertException.throwIfFalse(
+            localClient.exists(), "[StreamPark] " + localClient + " no exists. please check.");
+
+        List<String> jars = Arrays.stream(Objects.requireNonNull(localClient.list()))
+            .filter(x -> x.matches(regex))
+            .collect(Collectors.toList());
+
+        ApiAlertException.throwIfTrue(
+            jars.isEmpty(), "[StreamPark] can't found " + jarName + " jar in " + localClient);
+
+        ApiAlertException.throwIfTrue(
+            jars.size() > 1, "[StreamPark] found multiple " + jarName + " jar in " + localClient);
+        return jars.get(0);
     }
 
     public static String getSparkSqlClientJar(SparkEnv sparkEnv) {

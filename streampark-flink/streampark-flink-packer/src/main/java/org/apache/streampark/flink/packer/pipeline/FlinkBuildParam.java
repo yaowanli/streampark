@@ -45,7 +45,8 @@ public interface FlinkBuildParam extends BuildParam {
         Set<String> libs = new HashSet<>(Arrays.asList(
             Workspace.LOCAL.jars,
             customFlinkUserJar()));
-        if (flinkJobType() == FlinkJobType.FLINK_SQL) {
+        if (flinkJobType() == FlinkJobType.FLINK_SQL
+            || flinkJobType() == FlinkJobType.FLINK_CDC) {
             libs.add(
                 Workspace.LOCAL.shims
                     + "/flink-"

@@ -164,13 +164,21 @@
   async function handleAppUpdate(values) {
     try {
       submitLoading.value = true;
-      if (app.jobType == JobTypeEnum.SQL) {
+      if (app.jobType == JobTypeEnum.SQL || app.jobType == JobTypeEnum.CDC) {
         if (values.flinkSql == null || values.flinkSql.trim() === '') {
-          createMessage.warning(t('flink.app.editStreamPark.flinkSqlRequired'));
+          const errorMsg =
+            app.jobType == JobTypeEnum.SQL
+              ? t('flink.app.editStreamPark.flinkSqlRequired')
+              : t('flink.app.editStreamPark.yamlRequired');
+          createMessage.warning(errorMsg);
         } else {
           const access = await flinkSql?.value?.handleVerifySql();
           if (!access) {
-            createMessage.warning(t('flink.app.editStreamPark.sqlCheck'));
+            const errorMsg =
+              app.jobType == JobTypeEnum.SQL
+                ? t('flink.app.editStreamPark.sqlCheck')
+                : t('flink.app.editStreamPark.yamlCheck');
+            createMessage.warning(errorMsg);
             throw new Error(access);
           }
           handleSubmitSQL(values);
@@ -283,7 +291,7 @@
     Object.assign(app, res);
     Object.assign(defaultOptions, JSON.parse(app.options || '{}'));
 
-    if (app.jobType == JobTypeEnum.SQL) {
+    if (app.jobType == JobTypeEnum.SQL || app.jobType == JobTypeEnum.CDC) {
       fetchFlinkHistory({ id: appId }).then((res) => {
         flinkSqlHistory.value = res;
       });
@@ -383,6 +391,7 @@
           v-model:value="model[field]"
           :versionId="model['versionId']"
           :suggestions="suggestions"
+          :jobType="Number(model['jobType'])"
           @preview="(value) => openReviewDrawer(true, { value, suggestions })"
         />
       </template>

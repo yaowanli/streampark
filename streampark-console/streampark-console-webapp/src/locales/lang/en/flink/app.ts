@@ -207,6 +207,8 @@ export default {
     flinkSqlRequired: 'Flink Sql is required',
     appidCheck: 'appid can not be empty',
     sqlCheck: 'SQL check error',
+    yamlRequired: 'Yaml is required',
+    yamlCheck: 'Yaml check error',
   },
   operation: {
     edit: 'Edit Job',

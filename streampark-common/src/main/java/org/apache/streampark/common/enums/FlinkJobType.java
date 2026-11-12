@@ -43,7 +43,12 @@ public enum FlinkJobType {
     /**
      * Py flink Mode
      */
-    PYFLINK("Python Flink", 3);
+    PYFLINK("Python Flink", 3),
+
+    /**
+     * Flink CDC pipeline job driven by a YAML definition
+     */
+    FLINK_CDC("Flink CDC", 4);
 
     private final String name;
 

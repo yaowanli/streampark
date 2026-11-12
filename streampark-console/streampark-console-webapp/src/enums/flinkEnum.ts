@@ -151,6 +151,8 @@ export enum JobTypeEnum {
   JAR = 1,
   SQL = 2,
   PYFLINK = 3,
+  /** Flink CDC yaml pipeline job */
+  CDC = 4,
 }
 
 export enum ConfigTypeEnum {

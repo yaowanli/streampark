@@ -129,7 +129,10 @@ export const useEditStreamParkSchema = (
             { handleChangeSQL, handleCompareOk },
           ),
         ifShow: ({ values }) => {
-          return values.jobType == JobTypeEnum.SQL && unref(flinkSqlHistory).length > 1;
+          return (
+            (values.jobType == JobTypeEnum.SQL || values.jobType == JobTypeEnum.CDC) &&
+            unref(flinkSqlHistory).length > 1
+          );
         },
         required: true,
       },

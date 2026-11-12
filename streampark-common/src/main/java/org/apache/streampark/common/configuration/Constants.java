@@ -53,6 +53,9 @@ public final class Constants {
     /** StreamPark entry class used to launch Flink SQL applications. */
     public static final String STREAMPARK_FLINKSQL_CLIENT_CLASS = "org.apache.streampark.flink.cli.SqlClient";
 
+    /** StreamPark entry class used to launch Flink CDC YAML pipeline applications. */
+    public static final String STREAMPARK_FLINKCDC_CLIENT_CLASS = "org.apache.streampark.flink.cdc.cli.CDCClient";
+
     /** StreamPark entry class used to launch Spark SQL applications. */
     public static final String STREAMPARK_SPARKSQL_CLIENT_CLASS = "org.apache.streampark.spark.cli.SqlClient";
 
