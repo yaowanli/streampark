@@ -512,7 +512,7 @@ public class FlinkApplicationBuildPipelineServiceImpl
                 }
                 return Workspace.LOCAL.client.concat("/").concat(sqlDistJar);
             case FLINK_CDC:
-                String cdcDistJar = ServiceHelper.getFlinkCDCClientJar(flinkEnv, app);
+                String cdcDistJar = ServiceHelper.getFlinkCDCClientJar(app);
                 if (app.getDeployModeEnum() == FlinkDeployMode.YARN_APPLICATION) {
                     String clientPath = Workspace.REMOTE.client;
                     return String.format("%s/%s", clientPath, cdcDistJar);

@@ -270,6 +270,8 @@
               ? t('flink.app.editStreamPark.flinkSqlRequired')
               : t('flink.app.editStreamPark.yamlRequired');
           createMessage.warning(errorMsg);
+          submitLoading.value = false;
+          return;
         } else {
           const access = await flinkSql?.value?.handleVerifySql();
           if (!access) {

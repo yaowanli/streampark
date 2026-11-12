@@ -72,8 +72,7 @@ public class FlinkRemoteBuildPipeline extends BuildPipeline {
             execStep(
                 2,
                 () -> {
-                    if (request.flinkJobType() == FlinkJobType.FLINK_SQL
-                        || request.flinkJobType() == FlinkJobType.FLINK_CDC) {
+                    if (request.flinkJobType().isSqlLike()) {
                         File output =
                             MavenTool.buildFatJar(
                                 request.mainClass(),

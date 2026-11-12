@@ -43,11 +43,17 @@
             <outputDirectory>client</outputDirectory>
             <includes>
                 <include>org.apache.streampark:streampark-flink-sqlclient</include>
+                <include>org.apache.streampark:streampark-spark-sqlclient_${scala.binary.version}</include>
+            </includes>
+        </dependencySet>
+        <dependencySet>
+            <outputDirectory>client</outputDirectory>
+            <scope>provided</scope>
+            <includes>
                 <include>org.apache.streampark:streampark-flink-cdcclient-cdc32</include>
                 <include>org.apache.streampark:streampark-flink-cdcclient-cdc33</include>
                 <include>org.apache.streampark:streampark-flink-cdcclient-cdc34</include>
                 <include>org.apache.streampark:streampark-flink-cdcclient-cdc35</include>
-                <include>org.apache.streampark:streampark-spark-sqlclient_${scala.binary.version}</include>
             </includes>
         </dependencySet>
     </dependencySets>

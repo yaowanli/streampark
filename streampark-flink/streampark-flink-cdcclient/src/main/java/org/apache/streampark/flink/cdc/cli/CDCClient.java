@@ -25,9 +25,8 @@ import org.apache.streampark.common.configuration.FlinkOptions;
 import org.apache.streampark.common.configuration.option.ApplicationOptions;
 import org.apache.streampark.common.util.DeflaterUtils;
 
+import org.apache.flink.cdc.common.pipeline.PipelineOptions;
 import org.apache.flink.cdc.composer.PipelineExecution;
-import org.apache.flink.configuration.CoreOptions;
-import org.apache.flink.yarn.configuration.YarnConfigOptions;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,14 +84,11 @@ public final class CDCClient {
             configMap.putAll(parseYamlText(DeflaterUtils.unzipString(appConf.substring(YAML_PREFIX.length()))));
         }
 
-        String appName = parameters.get(ApplicationOptions.NAME);
-        if (appName != null && !appName.trim().isEmpty()) {
-            configMap.put(YarnConfigOptions.APPLICATION_NAME.key(), DeflaterUtils.unzipString(appName));
-        }
-
+        // the pipeline composer reads operator parallelism from the flink-cdc option key
+        // ("parallelism"), not from Flink's CoreOptions.DEFAULT_PARALLELISM
         Integer parallelism = parameters.get(FlinkOptions.PARALLELISM);
         if (parallelism != null) {
-            configMap.put(CoreOptions.DEFAULT_PARALLELISM.key(), parallelism.toString());
+            configMap.put(PipelineOptions.PIPELINE_PARALLELISM.key(), parallelism.toString());
         }
 
         return org.apache.flink.cdc.common.configuration.Configuration.fromMap(configMap);

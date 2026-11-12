@@ -50,6 +50,21 @@ class FlinkCdcUtilsTest {
     }
 
     @Test
+    void detectFromPipelineConnectorCoordinate() {
+        Dependency dependency = Dependency.toDependency(
+            "{\"pom\":[{\"groupId\":\"org.apache.flink\","
+                + "\"artifactId\":\"flink-cdc-pipeline-connector-mysql\",\"version\":\"3.2.1\"}]}");
+        assertThat(FlinkCdcUtils.detectConnectorMinorVersion(dependency)).contains(2);
+    }
+
+    @Test
+    void detectFromPipelineConnectorJarFile() {
+        Dependency dependency = Dependency.toDependency(
+            "{\"jar\":[\"flink-cdc-pipeline-connector-starrocks-3.3.0.jar\"]}");
+        assertThat(FlinkCdcUtils.detectConnectorMinorVersion(dependency)).contains(3);
+    }
+
+    @Test
     void legacyTwoXConnectorIsIgnored() {
         Dependency dependency = Dependency.toDependency(
             "{\"pom\":[{\"groupId\":\"com.ververica\","

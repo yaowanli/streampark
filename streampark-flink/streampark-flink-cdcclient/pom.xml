@@ -35,12 +35,42 @@
         <module>cdc35</module>
     </modules>
 
-    <!-- Shared sources are compiled once per supported Flink CDC release train. -->
+    <!-- default train; each variant module overrides this property -->
+    <properties>
+        <flink.cdc.version>3.5.0</flink.cdc.version>
+    </properties>
+
+    <!-- Shared sources are compiled once per supported Flink CDC release train; each variant
+         module only overrides the flink.cdc.version property. -->
     <dependencies>
         <dependency>
             <groupId>org.apache.streampark</groupId>
             <artifactId>streampark-common</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-cdc-common</artifactId>
+            <version>${flink.cdc.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-cdc-runtime</artifactId>
+            <version>${flink.cdc.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-cdc-cli</artifactId>
+            <version>${flink.cdc.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-cdc-composer</artifactId>
+            <version>${flink.cdc.version}</version>
         </dependency>
 
         <dependency>
@@ -62,19 +92,6 @@
             <artifactId>flink-streaming-java</artifactId>
             <version>${flink.version}</version>
             <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-yarn</artifactId>
-            <version>${flink.version}</version>
-            <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.flink</groupId>
-                    <artifactId>flink-kubernetes</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
     </dependencies>
 
@@ -127,9 +144,18 @@
                             </filter>
                         </filters>
                     </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>shade</goal>
+                            </goals>
+                            <phase>package</phase>
+                        </execution>
+                    </executions>
                 </plugin>
             </plugins>
         </pluginManagement>
+        <sourceDirectory>${project.basedir}/../src/main/java</sourceDirectory>
     </build>
 
     <profiles>

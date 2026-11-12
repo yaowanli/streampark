@@ -37,14 +37,23 @@ export const getDescSchema = (): DescItem[] => {
     {
       field: 'jobType',
       label: t('flink.app.jobType'),
-      render: (curVal) =>
-        h(
+      render: (curVal) => {
+        const jobTypeLabels: Record<number, string> = {
+          [JobTypeEnum.JAR]: 'Flink JAR',
+          [JobTypeEnum.SQL]: 'Flink SQL',
+          [JobTypeEnum.PYFLINK]: 'Python Flink',
+          [JobTypeEnum.CDC]: 'Flink CDC',
+        };
+        return h(
           'div',
           { class: 'bold-tag' },
-          h(Tag, { color: curVal === 1 ? '#545454' : '#0C7EF2', class: 'mr-8px' }, () =>
-            curVal === 1 ? 'Flink JAR' : 'Flink SQL',
+          h(
+            Tag,
+            { color: curVal === 1 ? '#545454' : '#0C7EF2', class: 'mr-8px' },
+            () => jobTypeLabels[curVal as number] ?? curVal,
           ),
-        ),
+        );
+      },
     },
     {
       field: 'module',

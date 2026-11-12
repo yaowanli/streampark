@@ -488,7 +488,7 @@ public class FlinkApplication extends BaseEntity implements ApplicationEntitySup
     /** Returns whether this application runs Flink SQL or a Flink CDC YAML pipeline. */
     @JsonIgnore
     public boolean isFlinkSqlJobOrCDC() {
-        return isFlinkSqlJob() || FlinkJobType.FLINK_CDC.getMode().equals(this.getJobType());
+        return getJobTypeEnum().isSqlLike();
     }
 
     @JsonIgnore

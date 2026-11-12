@@ -705,8 +705,11 @@ public class FlinkApplicationActionServiceImpl
             case FLINK_CDC:
                 FlinkSql flinkCDC = flinkSqlService.getEffective(application.getId(), false);
                 AssertUtils.notNull(flinkCDC);
+                // the entity from getById() carries no dependency (transient field): hydrate it
+                // from the effective flink sql so the connector version can be detected
+                application.setDependency(flinkCDC.getDependency());
                 // 1) dist_userJar
-                String cdcDistJar = ServiceHelper.getFlinkCDCClientJar(flinkEnv, application);
+                String cdcDistJar = ServiceHelper.getFlinkCDCClientJar(application);
                 // 2) appConfig
                 appConf =
                     applicationConfig == null

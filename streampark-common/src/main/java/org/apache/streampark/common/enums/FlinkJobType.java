@@ -82,4 +82,12 @@ public enum FlinkJobType {
     public Integer getMode() {
         return mode;
     }
+
+    /**
+     * Returns whether jobs of this type persist their payload in the flink sql storage and launch
+     * through a StreamPark-managed client entry class instead of a user main class.
+     */
+    public boolean isSqlLike() {
+        return this == FLINK_SQL || this == FLINK_CDC;
+    }
 }

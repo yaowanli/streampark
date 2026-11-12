@@ -90,7 +90,10 @@
       } catch (error) {
         verifyRes.errorStart = 0;
         verifyRes.errorEnd = 0;
-        verifyRes.errorMsg = `${error.name}: ${error.reason} at line ${error.mark.line}, column ${error.mark.column}`;
+        // some YAMLExceptions (e.g. multi-document streams) carry no position mark
+        verifyRes.errorMsg = error.mark
+          ? `${error.name}: ${error.reason} at line ${error.mark.line}, column ${error.mark.column}`
+          : `${error.name}: ${error.reason}`;
         syntaxError();
         return false;
       }

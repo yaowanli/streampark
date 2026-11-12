@@ -396,8 +396,7 @@ public final class FlinkConfigurationBuilder extends LoggerSupport {
         List<String> arguments =
             new ArrayList<>(CommandLineTokenizer.tokenize(request.args()));
         if (request.applicationType() == ApplicationType.STREAMPARK_FLINK
-            || request.jobType() == FlinkJobType.FLINK_SQL
-            || request.jobType() == FlinkJobType.FLINK_CDC) {
+            || request.jobType().isSqlLike()) {
             addStreamParkArguments(resolved, configuration, arguments);
         }
 
@@ -438,8 +437,7 @@ public final class FlinkConfigurationBuilder extends LoggerSupport {
                     CoreOptions.DEFAULT_PARALLELISM,
                     CoreOptions.DEFAULT_PARALLELISM.defaultValue())));
 
-        if (request.jobType() == FlinkJobType.FLINK_SQL
-            || request.jobType() == FlinkJobType.FLINK_CDC) {
+        if (request.jobType().isSqlLike()) {
             arguments.add(PARAM_KEY_FLINK_SQL);
             arguments.add(resolved.getFlinkSqlContent());
             addJobConfiguration(request.appConf(), arguments);

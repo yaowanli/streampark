@@ -484,24 +484,28 @@
             <groupId>org.apache.streampark</groupId>
             <artifactId>streampark-flink-cdcclient-cdc32</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.streampark</groupId>
             <artifactId>streampark-flink-cdcclient-cdc33</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.streampark</groupId>
             <artifactId>streampark-flink-cdcclient-cdc34</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.streampark</groupId>
             <artifactId>streampark-flink-cdcclient-cdc35</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>

@@ -25,54 +25,19 @@
     </parent>
 
     <artifactId>streampark-flink-cdcclient-cdc34</artifactId>
-    <name>StreamPark : Flink CDC Client (3.4.x)</name>
+    <name>StreamPark : Flink CDC Client (cdc34)</name>
 
     <properties>
         <flink.cdc.version>3.4.0</flink.cdc.version>
     </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-cdc-common</artifactId>
-            <version>${flink.cdc.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-cdc-runtime</artifactId>
-            <version>${flink.cdc.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-cdc-cli</artifactId>
-            <version>${flink.cdc.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-cdc-composer</artifactId>
-            <version>${flink.cdc.version}</version>
-        </dependency>
-    </dependencies>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <phase>package</phase>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
-        <sourceDirectory>${project.basedir}/../src/main/java</sourceDirectory>
     </build>
 
 </project>

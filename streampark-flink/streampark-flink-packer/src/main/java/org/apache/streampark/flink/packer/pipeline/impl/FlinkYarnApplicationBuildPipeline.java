@@ -45,9 +45,7 @@ public class FlinkYarnApplicationBuildPipeline extends BuildPipeline {
     @Override
     public SimpleBuildResponse buildProcess() {
         boolean sqlMode =
-            request.flinkJobType() == FlinkJobType.FLINK_SQL
-                || request.flinkJobType() == FlinkJobType.FLINK_CDC
-                || request.flinkJobType() == FlinkJobType.PYFLINK;
+            request.flinkJobType().isSqlLike() || request.flinkJobType() == FlinkJobType.PYFLINK;
         runYarnSqlBuildSteps(
             request.localWorkspace(),
             request.yarnProvidedPath(),
