@@ -1,0 +1,15 @@
+export default {
+  create: 'Create Cluster',
+  modify: 'Edit Cluster',
+  name: 'Cluster Name',
+  kubeconfig: 'Kubeconfig',
+  kubeconfigTip: 'Paste the kubeconfig file content',
+  prometheusUrl: 'Prometheus URL',
+  prometheusUrlTip: 'Optional, enables history trends when configured',
+  description: 'Description',
+  test: 'Test Connection',
+  testOk: 'Connection succeeded',
+  testFail: 'Connection failed',
+  deleteConfirm: 'Are you sure to delete this kubernetes cluster registration?',
+  namePlaceholder: 'Enter a display name for the cluster',
+};

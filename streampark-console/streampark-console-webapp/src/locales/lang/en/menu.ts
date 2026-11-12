@@ -49,4 +49,9 @@ export default {
     yarnQueue: 'Yarn Queue',
     flinkGateway: 'FLink Gateway',
   },
+  kubernetes: {
+    menu: 'Kubernetes',
+    cluster: 'K8S Clusters',
+    monitor: 'K8S Monitor',
+  },
 };

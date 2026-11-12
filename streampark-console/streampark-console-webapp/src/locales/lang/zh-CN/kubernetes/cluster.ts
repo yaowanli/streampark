@@ -1,0 +1,15 @@
+export default {
+  create: '新建集群',
+  modify: '编辑集群',
+  name: '集群名称',
+  kubeconfig: 'Kubeconfig',
+  kubeconfigTip: '粘贴 kubeconfig 文件内容',
+  prometheusUrl: 'Prometheus 地址',
+  prometheusUrlTip: '选填，配置后可查看历史趋势',
+  description: '描述',
+  test: '测试连接',
+  testOk: '连接成功',
+  testFail: '连接失败',
+  deleteConfirm: '确定要删除该 K8S 集群注册吗?',
+  namePlaceholder: '请输入集群显示名称',
+};

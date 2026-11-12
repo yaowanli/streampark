@@ -1,6 +1,7 @@
 export interface K8sCluster {
   id: string | number;
   clusterName: string;
+  kubeconfig?: string;
   prometheusUrl?: string;
   description?: string;
   createTime?: string;

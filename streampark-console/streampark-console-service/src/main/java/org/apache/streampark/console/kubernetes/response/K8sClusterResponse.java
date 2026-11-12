@@ -23,7 +23,7 @@ import lombok.Setter;
 import java.io.Serializable;
 import java.util.Date;
 
-/** API response for a kubernetes cluster registration (kubeconfig content excluded). */
+/** API response for a kubernetes cluster registration. */
 @Getter
 @Setter
 public class K8sClusterResponse implements Serializable {
@@ -33,6 +33,8 @@ public class K8sClusterResponse implements Serializable {
     private Long id;
 
     private String clusterName;
+
+    private String kubeconfig;
 
     private String prometheusUrl;
 
