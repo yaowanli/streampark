@@ -42,4 +42,5 @@ export default {
   session: 'Session',
   application: 'Application',
   empty: 'No data',
+  noCluster: 'No kubernetes cluster registered yet. Register one in Settings → K8S Clusters first.',
 };

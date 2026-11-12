@@ -38,7 +38,13 @@
         </ACol>
       </ARow>
 
-      <ATabs v-model:activeKey="activeTab">
+      <AAlert
+        v-if="clusters.length === 0"
+        type="info"
+        show-icon
+        :message="t('kubernetes.monitor.noCluster')"
+      />
+      <ATabs v-else v-model:activeKey="activeTab">
         <ATabPane key="overview" :tab="t('kubernetes.monitor.overview')">
           <OverviewTab
             v-if="activeTab === 'overview'"
@@ -73,7 +79,7 @@
 </template>
 <script lang="ts">
   import { defineComponent, computed, onUnmounted, ref, watch } from 'vue';
-  import { Button, Col, Row, Select, Switch, TabPane, Tabs } from 'ant-design-vue';
+  import { Alert, Button, Col, Row, Select, Switch, TabPane, Tabs } from 'ant-design-vue';
   import { fetchK8sClusterList } from '/@/api/kubernetes/cluster';
   import type { K8sCluster } from '/@/api/kubernetes/cluster.type';
   import { useI18n } from '/@/hooks/web/useI18n';
@@ -89,6 +95,7 @@
   export default defineComponent({
     name: 'K8sMonitor',
     components: {
+      AAlert: Alert,
       AButton: Button,
       ACol: Col,
       ARow: Row,

@@ -42,4 +42,5 @@ export default {
   session: 'Session',
   application: 'Application',
   empty: '暂无数据',
+  noCluster: '尚未注册 K8S 集群，请先到「设置中心 → K8S 集群」注册',
 };
