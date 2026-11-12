@@ -23,7 +23,10 @@ import lombok.Setter;
 import java.io.Serializable;
 import java.util.Date;
 
-/** API response for a kubernetes cluster registration. */
+/**
+ * API response for a kubernetes cluster registration. kubeconfig is intentionally excluded here (it
+ * is a credential); it is only returned by the permission-gated /k8s/cluster/get endpoint.
+ */
 @Getter
 @Setter
 public class K8sClusterResponse implements Serializable {
@@ -33,8 +36,6 @@ public class K8sClusterResponse implements Serializable {
     private Long id;
 
     private String clusterName;
-
-    private String kubeconfig;
 
     private String prometheusUrl;
 

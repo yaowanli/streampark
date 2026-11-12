@@ -91,7 +91,7 @@
       ];
 
       const load = async () => {
-        if (!props.cluster?.id) return;
+        if (!props.cluster?.id || loading.value) return;
         loading.value = true;
         try {
           nodes.value = (await fetchK8sNodes(props.cluster.id)) || [];

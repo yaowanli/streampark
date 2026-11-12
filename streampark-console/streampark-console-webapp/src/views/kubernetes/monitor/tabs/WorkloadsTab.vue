@@ -211,11 +211,14 @@
       };
 
       watch(
+        () => props.cluster?.id,
+        () => loadNamespaces(),
+        { immediate: true },
+      );
+
+      watch(
         () => [props.cluster?.id, props.reloadKey],
-        () => {
-          loadNamespaces();
-          loadDeployments();
-        },
+        () => loadDeployments(),
         { immediate: true },
       );
 

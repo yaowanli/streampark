@@ -1,3 +1,5 @@
+import { formatToDateTime } from '/@/utils/dateUtil';
+
 export const formatCpu = (millis?: number) => {
   if (millis == null || millis < 0) return '—';
   return millis >= 1000 ? `${(millis / 1000).toFixed(1)} cores` : `${millis}m`;
@@ -15,4 +17,4 @@ export const formatMemory = (bytes?: number) => {
   return `${v.toFixed(1)} ${units[i]}`;
 };
 
-export const formatTimestamp = (ts?: string) => (ts ? ts.replace('T', ' ').slice(0, 19) : '—');
+export const formatTimestamp = (ts?: string) => (ts ? formatToDateTime(ts) : '—');

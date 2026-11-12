@@ -110,8 +110,10 @@
         return chart;
       };
 
+      let loadSeq = 0;
       const load = async () => {
         if (!props.clusterId || !props.name) return;
+        const seq = ++loadSeq;
         loading.value = true;
         try {
           const series: HistorySeries = await fetchK8sHistory(
@@ -121,6 +123,7 @@
             props.namespace,
             range.value,
           );
+          if (seq !== loadSeq) return;
           disposeCharts();
           cpuChart = renderLine(
             cpuRef.value,
@@ -137,7 +140,9 @@
             '#10b981',
           );
         } finally {
-          loading.value = false;
+          if (seq === loadSeq) {
+            loading.value = false;
+          }
         }
       };
 

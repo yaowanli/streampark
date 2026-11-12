@@ -18,12 +18,16 @@
 package org.apache.streampark.console.kubernetes.controller;
 
 import org.apache.streampark.console.base.domain.RestResponseBody;
+import org.apache.streampark.console.base.exception.ApiAlertException;
 import org.apache.streampark.console.base.web.FormOrJson;
+import org.apache.streampark.console.core.request.common.IdRequest;
 import org.apache.streampark.console.kubernetes.assembler.K8sClusterAssembler;
 import org.apache.streampark.console.kubernetes.client.K8sClientManager;
+import org.apache.streampark.console.kubernetes.entity.K8sCluster;
 import org.apache.streampark.console.kubernetes.request.K8sClusterCreateRequest;
 import org.apache.streampark.console.kubernetes.request.K8sClusterTestRequest;
 import org.apache.streampark.console.kubernetes.request.K8sClusterUpdateRequest;
+import org.apache.streampark.console.kubernetes.response.K8sClusterDetailResponse;
 import org.apache.streampark.console.kubernetes.response.K8sClusterResponse;
 import org.apache.streampark.console.kubernetes.response.K8sClusterTestResponse;
 import org.apache.streampark.console.kubernetes.service.K8sClusterService;
@@ -61,6 +65,15 @@ public class K8sClusterController {
             K8sClusterAssembler.toListResponse(k8sClusterService.listAll()));
     }
 
+    /** Returns the full cluster registration incl. kubeconfig; gated because kubeconfig is a credential. */
+    @PostMapping("get")
+    @RequiresPermissions("k8sCluster:view")
+    public RestResponseBody<K8sClusterDetailResponse> get(@Valid @FormOrJson IdRequest request) {
+        K8sCluster cluster = k8sClusterService.getById(request.getId());
+        ApiAlertException.throwIfNull(cluster, "The kubernetes cluster registration doesn't exist.");
+        return RestResponseBody.success(K8sClusterAssembler.toDetailResponse(cluster));
+    }
+
     @PostMapping("create")
     @RequiresPermissions("k8sCluster:create")
     public RestResponseBody<Boolean> create(@Valid @FormOrJson K8sClusterCreateRequest request) {
@@ -77,8 +90,10 @@ public class K8sClusterController {
 
     @PostMapping("delete")
     @RequiresPermissions("k8sCluster:delete")
-    public RestResponseBody<Void> delete(@Valid @FormOrJson K8sClusterUpdateRequest request) {
-        k8sClusterService.remove(K8sClusterAssembler.toEntity(request));
+    public RestResponseBody<Void> delete(@Valid @FormOrJson IdRequest request) {
+        K8sCluster cluster = new K8sCluster();
+        cluster.setId(request.getId());
+        k8sClusterService.remove(cluster);
         return RestResponseBody.success();
     }
 

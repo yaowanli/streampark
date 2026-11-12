@@ -22,6 +22,7 @@ import type { K8sCluster, K8sClusterTestResult } from './cluster.type';
 
 enum K8S_CLUSTER_API {
   LIST = '/k8s/cluster/list',
+  GET = '/k8s/cluster/get',
   CREATE = '/k8s/cluster/create',
   UPDATE = '/k8s/cluster/update',
   DELETE = '/k8s/cluster/delete',
@@ -30,6 +31,10 @@ enum K8S_CLUSTER_API {
 
 export function fetchK8sClusterList() {
   return defHttp.post<K8sCluster[]>({ url: K8S_CLUSTER_API.LIST });
+}
+
+export function fetchK8sClusterGet(id: number | string) {
+  return defHttp.post<K8sCluster>({ url: K8S_CLUSTER_API.GET, data: { id } });
 }
 
 export function fetchK8sClusterCreate(data: Recordable) {

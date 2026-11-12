@@ -82,13 +82,33 @@
         </ACard>
       </ACol>
     </ARow>
+    <ACard
+      v-if="events.length > 0"
+      size="small"
+      class="mt-4"
+      :title="t('kubernetes.monitor.events')"
+    >
+      <ATable
+        :columns="eventColumns"
+        :data-source="events"
+        row-key="object"
+        size="small"
+        :pagination="false"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.dataIndex === 'lastTimestamp'">
+            {{ formatTimestamp(record.lastTimestamp) }}
+          </template>
+        </template>
+      </ATable>
+    </ACard>
   </div>
 </template>
 <script lang="ts">
   import { defineComponent, ref, watch } from 'vue';
-  import { Alert, Card, Col, Row, Statistic } from 'ant-design-vue';
-  import { fetchK8sOverview } from '/@/api/kubernetes/monitor';
-  import type { ClusterOverview } from '/@/api/kubernetes/monitor.type';
+  import { Alert, Card, Col, Row, Statistic, Table } from 'ant-design-vue';
+  import { fetchK8sEvents, fetchK8sOverview } from '/@/api/kubernetes/monitor';
+  import type { ClusterOverview, K8sEvent } from '/@/api/kubernetes/monitor.type';
   import { useI18n } from '/@/hooks/web/useI18n';
   import ResourceRingChart from '../components/ResourceRingChart.vue';
   import { formatCpu, formatMemory } from '../utils';
@@ -101,6 +121,7 @@
       ACol: Col,
       ARow: Row,
       AStatistic: Statistic,
+      ATable: Table,
       ResourceRingChart,
     },
     props: {
@@ -110,10 +131,27 @@
     setup(props) {
       const { t } = useI18n();
       const overview = ref<ClusterOverview>();
+      const events = ref<K8sEvent[]>([]);
+      const loading = ref(false);
+
+      const eventColumns = [
+        { title: t('kubernetes.monitor.eventType'), dataIndex: 'type', width: 80 },
+        { title: t('kubernetes.monitor.reason'), dataIndex: 'reason', width: 130 },
+        { title: t('kubernetes.monitor.object'), dataIndex: 'object', width: 200 },
+        { title: t('kubernetes.monitor.message'), dataIndex: 'message' },
+        { title: t('kubernetes.monitor.count'), dataIndex: 'count', width: 70 },
+        { title: t('kubernetes.monitor.lastSeen'), dataIndex: 'lastTimestamp', width: 160 },
+      ];
 
       const load = async () => {
-        if (!props.clusterId) return;
-        overview.value = await fetchK8sOverview(props.clusterId);
+        if (!props.clusterId || loading.value) return;
+        loading.value = true;
+        try {
+          overview.value = await fetchK8sOverview(props.clusterId);
+          events.value = (await fetchK8sEvents(props.clusterId, undefined, 8)) || [];
+        } finally {
+          loading.value = false;
+        }
       };
 
       watch(
@@ -122,7 +160,7 @@
         { immediate: true },
       );
 
-      return { overview, formatCpu, formatMemory, t };
+      return { overview, events, eventColumns, formatCpu, formatMemory, formatTimestamp, t };
     },
   });
 </script>

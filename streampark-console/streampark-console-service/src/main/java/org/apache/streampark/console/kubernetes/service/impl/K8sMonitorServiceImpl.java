@@ -20,7 +20,9 @@ package org.apache.streampark.console.kubernetes.service.impl;
 import org.apache.streampark.common.enums.FlinkDeployMode;
 import org.apache.streampark.console.base.exception.ApiAlertException;
 import org.apache.streampark.console.core.entity.FlinkApplication;
+import org.apache.streampark.console.core.entity.FlinkCluster;
 import org.apache.streampark.console.core.mapper.FlinkApplicationMapper;
+import org.apache.streampark.console.core.service.FlinkClusterService;
 import org.apache.streampark.console.kubernetes.client.K8sClientManager;
 import org.apache.streampark.console.kubernetes.client.K8sPrometheusClient;
 import org.apache.streampark.console.kubernetes.entity.K8sCluster;
@@ -59,6 +61,10 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -66,20 +72,23 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
 
     private static final String LABEL_NODE_ROLE_PREFIX = "node-role.kubernetes.io/";
 
-    /** range -> seconds. */
-    private static final Map<String, Long> RANGE_SECONDS = new HashMap<>();
-    static {
-        RANGE_SECONDS.put("1h", 3600L);
-        RANGE_SECONDS.put("6h", 6 * 3600L);
-        RANGE_SECONDS.put("24h", 24 * 3600L);
-        RANGE_SECONDS.put("7d", 7 * 86400L);
-    }
+    /** kubernetes-safe name charset, also keeps PromQL label matchers injection-free. */
+    private static final Pattern K8S_NAME_PATTERN = Pattern.compile("^[a-zA-Z0-9._-]+$");
+
+    private static final Map<String, Long> RANGE_SECONDS = Map.of(
+        "1h", 3600L,
+        "6h", 6 * 3600L,
+        "24h", 24 * 3600L,
+        "7d", 7 * 86400L);
 
     @Autowired
     private K8sClientManager k8sClientManager;
 
     @Autowired
     private FlinkApplicationMapper flinkApplicationMapper;
+
+    @Autowired
+    private FlinkClusterService flinkClusterService;
 
     @Autowired
     private FlinkKubernetesWatcher flinkK8sWatcher;
@@ -136,14 +145,9 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
     public List<NodeResponse> nodes(K8sCluster cluster) {
         KubernetesClient client = k8sClientManager.getOrCreate(cluster.getId(), cluster.getKubeconfig());
         List<Node> nodes = client.nodes().list().getItems();
-        Map<String, NodeMetrics> metricsByName;
-        try {
-            metricsByName = client.top().nodes().metrics().getItems().stream()
-                .collect(Collectors.toMap(m -> m.getMetadata().getName(), m -> m, (a, b) -> a));
-        } catch (Exception e) {
-            metricsByName = new HashMap<>();
-        }
-        final Map<String, NodeMetrics> metricsIndex = metricsByName;
+        Map<String, NodeMetrics> metricsByName = safeMap(() -> client.top().nodes().metrics().getItems()
+            .stream()
+            .collect(Collectors.toMap(m -> m.getMetadata().getName(), m -> m, (a, b) -> a)));
         return nodes.stream().map(node -> {
             NodeResponse r = new NodeResponse();
             r.setName(node.getMetadata().getName());
@@ -167,7 +171,7 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
                 K8sQuantityUtils.cpuToMillis(node.getStatus().getAllocatable().get("cpu")));
             r.setMemAllocatableBytes(
                 K8sQuantityUtils.memoryToBytes(node.getStatus().getAllocatable().get("memory")));
-            NodeMetrics m = metricsIndex.get(node.getMetadata().getName());
+            NodeMetrics m = metricsByName.get(node.getMetadata().getName());
             if (m != null) {
                 r.setCpuUsedMillis(K8sQuantityUtils.cpuToMillis(m.getUsage().get("cpu")));
                 r.setMemUsedBytes(K8sQuantityUtils.memoryToBytes(m.getUsage().get("memory")));
@@ -183,7 +187,7 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
         List<Deployment> list = StringUtils.isBlank(namespace)
             ? client.apps().deployments().inAnyNamespace().list().getItems()
             : client.apps().deployments().inNamespace(namespace).list().getItems();
-        Map<Long, FlinkApplication> appsById = loadK8sAppsById();
+        Map<String, FlinkApplication> appByDeploy = streamParkAppIndex();
         return list.stream()
             .filter(d -> StringUtils.isBlank(keyword)
                 || d.getMetadata().getName().contains(keyword))
@@ -202,8 +206,7 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
                     && CollectionUtils.isNotEmpty(d.getSpec().getTemplate().getSpec().getContainers())) {
                     r.setImage(d.getSpec().getTemplate().getSpec().getContainers().get(0).getImage());
                 }
-                FlinkApplication app = appsById.get(
-                    streamParkAppIdOf(r.getNamespace(), r.getName(), appsById));
+                FlinkApplication app = appByDeploy.get(r.getNamespace() + "/" + r.getName());
                 if (app != null) {
                     r.setStreamParkAppId(app.getId());
                     r.setStreamParkAppName(app.getJobName());
@@ -220,16 +223,13 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
         List<Pod> list = StringUtils.isBlank(namespace)
             ? client.pods().inAnyNamespace().list().getItems()
             : client.pods().inNamespace(namespace).list().getItems();
-        Map<String, PodMetrics> podMetrics;
-        try {
-            podMetrics = client.top().pods().metrics().getItems().stream()
+        // metrics lookup scoped to the same namespace when one is given
+        Map<String, PodMetrics> podMetrics = safeMap(() -> (StringUtils.isBlank(namespace)
+            ? client.top().pods().metrics().getItems()
+            : client.top().pods().inNamespace(namespace).metrics().getItems()).stream()
                 .collect(Collectors.toMap(
                     m -> m.getMetadata().getNamespace() + "/" + m.getMetadata().getName(),
-                    m -> m, (a, b) -> a));
-        } catch (Exception e) {
-            podMetrics = new HashMap<>();
-        }
-        final Map<String, PodMetrics> podMetricsIndex = podMetrics;
+                    m -> m, (a, b) -> a)));
         return list.stream()
             .filter(p -> StringUtils.isBlank(keyword)
                 || p.getMetadata().getName().contains(keyword))
@@ -240,13 +240,14 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
                 r.setNodeName(p.getSpec() == null ? null : p.getSpec().getNodeName());
                 r.setPhase(p.getStatus().getPhase());
                 r.setIp(p.getStatus().getPodIP());
+                r.setLabels(p.getMetadata().getLabels());
                 r.setCreationTimestamp(p.getMetadata().getCreationTimestamp());
                 if (CollectionUtils.isNotEmpty(p.getStatus().getContainerStatuses())) {
                     r.setRestarts(p.getStatus().getContainerStatuses().stream()
                         .mapToLong(s -> s.getRestartCount() == null ? 0 : s.getRestartCount().longValue())
                         .sum());
                 }
-                PodMetrics m = podMetricsIndex.get(r.getNamespace() + "/" + r.getName());
+                PodMetrics m = podMetrics.get(r.getNamespace() + "/" + r.getName());
                 if (m != null) {
                     r.setCpuMillis(m.getContainers().stream()
                         .mapToLong(c -> K8sQuantityUtils.cpuToMillis(c.getUsage().get("cpu"))).sum());
@@ -263,11 +264,10 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
     public List<EventResponse> events(K8sCluster cluster, String namespace, int limit) {
         KubernetesClient client = k8sClientManager.getOrCreate(cluster.getId(), cluster.getKubeconfig());
         List<Event> list = StringUtils.isBlank(namespace)
-            ? client.v1().events().inAnyNamespace().list().getItems()
-            : client.v1().events().inNamespace(namespace).list().getItems();
+            ? client.v1().events().inAnyNamespace().withField("type", "Warning").list().getItems()
+            : client.v1().events().inNamespace(namespace).withField("type", "Warning").list().getItems();
         // lastTimestamp is ISO8601 string: lexicographic order == chronological order
         return list.stream()
-            .filter(e -> "Warning".equals(e.getType()))
             .sorted(Comparator.comparing(Event::getLastTimestamp,
                 Comparator.nullsFirst(Comparator.naturalOrder())).reversed())
             .limit(limit)
@@ -302,6 +302,12 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
         ApiAlertException.throwIfTrue(
             StringUtils.isBlank(cluster.getPrometheusUrl()),
             "Prometheus is not configured for this cluster.");
+        ApiAlertException.throwIfTrue(
+            !"cluster".equals(kind) && (name == null || !K8S_NAME_PATTERN.matcher(name).matches()),
+            "Invalid resource name for history query.");
+        ApiAlertException.throwIfTrue(
+            "pod".equals(kind) && (namespace == null || !K8S_NAME_PATTERN.matcher(namespace).matches()),
+            "Invalid namespace for history query.");
 
         long seconds = RANGE_SECONDS.getOrDefault(range, 21600L);
         long end = System.currentTimeMillis() / 1000;
@@ -313,17 +319,18 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
         switch (kind) {
             case "node":
                 cpuQuery = String.format(
-                    "sum(rate(container_cpu_usage_seconds_total{node=\"%s\"}[5m])) * 1000", name);
+                    "sum(rate(container_cpu_usage_seconds_total{node=\"%s\"}[5m])) * 1000",
+                    promLabel(name));
                 memQuery = String.format(
-                    "sum(container_memory_working_set_bytes{node=\"%s\"})", name);
+                    "sum(container_memory_working_set_bytes{node=\"%s\"})", promLabel(name));
                 break;
             case "pod":
                 cpuQuery = String.format(
                     "sum(rate(container_cpu_usage_seconds_total{namespace=\"%s\",pod=\"%s\"}[5m])) * 1000",
-                    namespace, name);
+                    promLabel(namespace), promLabel(name));
                 memQuery = String.format(
                     "sum(container_memory_working_set_bytes{namespace=\"%s\",pod=\"%s\"})",
-                    namespace, name);
+                    promLabel(namespace), promLabel(name));
                 break;
             default:
                 cpuQuery = "sum(rate(container_cpu_usage_seconds_total"
@@ -342,27 +349,29 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
     // ---------- flink apps ----------
     @Override
     public List<FlinkAppResponse> flinkApps(K8sCluster cluster) {
-        List<FlinkApplication> apps = new ArrayList<>(loadK8sAppsById().values());
-        Map<Long, JobStatusCV> statusByAppId = new HashMap<>();
-        try {
+        List<FlinkApplication> apps = loadK8sApps();
+        Map<Long, JobStatusCV> statusByAppId = safeMap(() -> {
             Map<CacheKey, JobStatusCV> jobStatuses = flinkK8sWatcher.getAllJobStatus();
+            Map<Long, JobStatusCV> byId = new HashMap<>();
             if (jobStatuses != null) {
-                jobStatuses.forEach(
-                    (key, value) -> statusByAppId.put(key.key(), value));
+                jobStatuses.forEach((key, value) -> byId.put(key.key(), value));
             }
-        } catch (Exception e) {
-            // watcher unavailable: job state stays null
-        }
+            return byId;
+        });
+        List<PodResponse> clusterPods = safeList(() -> pods(cluster, null, null));
+        Set<String> clusterDeployKeys = safeList(() -> deployments(cluster, null, null)).stream()
+            .map(d -> d.getNamespace() + "/" + d.getName())
+            .collect(Collectors.toSet());
 
-        List<PodResponse> clusterPods = new ArrayList<>();
-        try {
-            clusterPods = pods(cluster, null, null);
-        } catch (Exception e) {
-            // selected cluster unreachable: pod usage stays null
-        }
-        final List<PodResponse> podsIndex = clusterPods;
-
-        return apps.stream().map(app -> {
+        Map<Long, FlinkCluster> flinkClustersById = loadFlinkClustersById(apps);
+        List<FlinkAppResponse> result = new ArrayList<>();
+        for (FlinkApplication app : apps) {
+            String deployKey = deploymentKeyOf(app, flinkClustersById);
+            // only list apps actually running on the selected cluster
+            if (deployKey == null || !clusterDeployKeys.contains(deployKey)) {
+                continue;
+            }
+            int slash = deployKey.indexOf('/');
             FlinkAppResponse r = new FlinkAppResponse();
             r.setId(app.getId());
             r.setAppName(app.getJobName());
@@ -372,15 +381,17 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
             if (status != null && status.jobState() != null) {
                 r.setJobState(status.jobState().name());
             }
-            PodResponse pod = matchAppPod(podsIndex, r.getK8sNamespace(), r.getAppName());
+            PodResponse pod = matchAppPod(
+                clusterPods, deployKey.substring(0, slash), deployKey.substring(slash + 1));
             if (pod != null) {
                 r.setCpuMillis(pod.getCpuMillis());
                 r.setMemoryBytes(pod.getMemoryBytes());
                 r.setRestarts(pod.getRestarts());
                 r.setPodPhase(pod.getPhase());
             }
-            return r;
-        }).collect(Collectors.toList());
+            result.add(r);
+        }
+        return result;
     }
 
     // ---------- private ----------
@@ -392,44 +403,99 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
             .anyMatch(c -> "Ready".equals(c.getType()) && "True".equals(c.getStatus()));
     }
 
-    private Map<Long, FlinkApplication> loadK8sAppsById() {
-        List<FlinkApplication> apps = flinkApplicationMapper.selectList(
-            new LambdaQueryWrapper<FlinkApplication>()
-                .in(FlinkApplication::getDeployMode,
-                    FlinkDeployMode.KUBERNETES_NATIVE_SESSION.getMode(),
-                    FlinkDeployMode.KUBERNETES_NATIVE_APPLICATION.getMode()));
-        return apps.stream()
-            .collect(Collectors.toMap(FlinkApplication::getId, a -> a, (a, b) -> a));
+    private List<FlinkApplication> loadK8sApps() {
+        return flinkApplicationMapper.selectList(new LambdaQueryWrapper<FlinkApplication>()
+            .in(FlinkApplication::getDeployMode, FlinkDeployMode.getKubernetesMode()));
     }
 
-    @VisibleForTesting
-    public static Long streamParkAppIdOf(
-                                         String namespace, String deploymentName,
-                                         Map<Long, FlinkApplication> appsById) {
-        for (FlinkApplication app : appsById.values()) {
-            if (StringUtils.isNotBlank(app.getJobName())
-                && app.getJobName().equals(deploymentName)
-                && StringUtils.equals(app.getK8sNamespace(), namespace)) {
-                return app.getId();
+    private Map<Long, FlinkCluster> loadFlinkClustersById(List<FlinkApplication> apps) {
+        Set<Long> clusterIds = apps.stream()
+            .map(FlinkApplication::getFlinkClusterId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+        if (clusterIds.isEmpty()) {
+            return new HashMap<>();
+        }
+        return flinkClusterService.listByIds(clusterIds).stream()
+            .collect(Collectors.toMap(FlinkCluster::getId, c -> c, (a, b) -> a));
+    }
+
+    /** Index of this.streamPark-managed k8s apps keyed by {@code namespace/deploymentName}. */
+    private Map<String, FlinkApplication> streamParkAppIndex() {
+        List<FlinkApplication> apps = loadK8sApps();
+        Map<Long, FlinkCluster> flinkClustersById = loadFlinkClustersById(apps);
+        Map<String, FlinkApplication> index = new HashMap<>();
+        for (FlinkApplication app : apps) {
+            String key = deploymentKeyOf(app, flinkClustersById);
+            if (key != null) {
+                index.put(key, app);
             }
         }
-        return null;
+        return index;
     }
 
-    /** Matches flink application pods: application-mode pods are named {@code <jobName>-<hash>-<id>}. */
-    private static PodResponse matchAppPod(List<PodResponse> pods, String namespace, String jobName) {
-        if (StringUtils.isBlank(jobName)) {
+    /**
+     * Deployment identity of a StreamPark app on kubernetes: application mode deploys under the
+     * jobName, session mode under the referenced FlinkCluster's clusterId (see
+     * FlinkApplicationActionServiceImpl.getNamespaceClusterId).
+     */
+    @VisibleForTesting
+    public static String deploymentKeyOf(FlinkApplication app, Map<Long, FlinkCluster> flinkClustersById) {
+        if (FlinkDeployMode.KUBERNETES_NATIVE_APPLICATION == FlinkDeployMode.of(app.getDeployMode())) {
+            return StringUtils.isBlank(app.getJobName())
+                ? null
+                : app.getK8sNamespace() + "/" + app.getJobName();
+        }
+        FlinkCluster flinkCluster =
+            app.getFlinkClusterId() == null ? null : flinkClustersById.get(app.getFlinkClusterId());
+        return flinkCluster == null ? null : flinkCluster.getK8sNamespace() + "/" + flinkCluster.getClusterId();
+    }
+
+    /**
+     * Matches an app's pod on the selected cluster: exact {@code app=<deploymentName>} label first
+     * (flink-native pods carry it), then the deployment→pod name-prefix convention as fallback.
+     */
+    private static PodResponse matchAppPod(List<PodResponse> pods, String namespace, String deploymentName) {
+        if (StringUtils.isBlank(deploymentName)) {
             return null;
         }
         for (PodResponse pod : pods) {
             if (StringUtils.equals(pod.getNamespace(), namespace)
+                && pod.getLabels() != null
+                && deploymentName.equals(pod.getLabels().get("app"))) {
+                return pod;
+            }
+        }
+        for (PodResponse pod : pods) {
+            if (StringUtils.equals(pod.getNamespace(), namespace)
                 && pod.getName() != null
-                && (pod.getName().equals(jobName)
-                    || (pod.getName().startsWith(jobName)
-                        && pod.getName().charAt(jobName.length()) == '-'))) {
+                && (pod.getName().equals(deploymentName)
+                    || (pod.getName().startsWith(deploymentName)
+                        && pod.getName().charAt(deploymentName.length()) == '-'))) {
                 return pod;
             }
         }
         return null;
+    }
+
+    /** Escapes a label value so it cannot break out of the PromQL string matcher. */
+    private static String promLabel(String value) {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "");
+    }
+
+    private static <T> List<T> safeList(Supplier<List<T>> supplier) {
+        try {
+            return supplier.get();
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    private static <K, V> Map<K, V> safeMap(Supplier<Map<K, V>> supplier) {
+        try {
+            return supplier.get();
+        } catch (Exception e) {
+            return new HashMap<>();
+        }
     }
 }

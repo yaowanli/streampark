@@ -94,8 +94,8 @@
       }
 
       async function handleDelete(record: Recordable) {
-        const res = await fetchK8sClusterDelete(record.id);
-        if (res?.status === 0) {
+        const { data } = await fetchK8sClusterDelete(record.id);
+        if (data.status === 'success') {
           createMessage.success(t('common.operateTip'));
           reload();
         }

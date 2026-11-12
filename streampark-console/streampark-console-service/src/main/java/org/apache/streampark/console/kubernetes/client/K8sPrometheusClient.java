@@ -19,6 +19,9 @@ package org.apache.streampark.console.kubernetes.client;
 
 import org.apache.streampark.common.util.HttpClientUtils;
 
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.core5.util.Timeout;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -68,6 +71,10 @@ public final class K8sPrometheusClient {
     public static List<long[]> queryRange(
                                           String prometheusUrl, String query, long startSec, long endSec, int stepSec) {
         String url = buildRangeUrl(prometheusUrl, query, startSec, endSec, stepSec);
-        return parseMatrix(HttpClientUtils.httpGetRequest(url, null));
+        RequestConfig config = RequestConfig.custom()
+            .setConnectTimeout(Timeout.ofSeconds(5))
+            .setResponseTimeout(Timeout.ofSeconds(30))
+            .build();
+        return parseMatrix(HttpClientUtils.httpGetRequest(url, config));
     }
 }

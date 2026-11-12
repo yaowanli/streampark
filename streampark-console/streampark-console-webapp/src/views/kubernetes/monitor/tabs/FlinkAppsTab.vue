@@ -95,7 +95,7 @@
       ];
 
       const load = async () => {
-        if (!props.cluster?.id) return;
+        if (!props.cluster?.id || loading.value) return;
         loading.value = true;
         try {
           apps.value = (await fetchK8sFlinkApps(props.cluster.id)) || [];

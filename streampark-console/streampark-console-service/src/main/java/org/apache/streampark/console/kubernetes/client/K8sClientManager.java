@@ -34,18 +34,7 @@ public class K8sClientManager {
     private final ConcurrentHashMap<Long, KubernetesClient> clients = new ConcurrentHashMap<>();
 
     public KubernetesClient getOrCreate(Long clusterId, String kubeconfig) {
-        KubernetesClient client = clients.get(clusterId);
-        if (client != null) {
-            return client;
-        }
-        synchronized (this) {
-            client = clients.get(clusterId);
-            if (client == null) {
-                client = buildClient(kubeconfig);
-                clients.put(clusterId, client);
-            }
-            return client;
-        }
+        return clients.computeIfAbsent(clusterId, id -> buildClient(kubeconfig));
     }
 
     public void invalidate(Long clusterId) {

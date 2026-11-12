@@ -191,6 +191,12 @@
 
             <!--kubernetes-->
             <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-yaml</artifactId>
+                <version>2.15.2</version>
+            </dependency>
+
+            <dependency>
                 <groupId>io.fabric8</groupId>
                 <artifactId>kubernetes-client-api</artifactId>
                 <version>${kubernetes.client.version}</version>

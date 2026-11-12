@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -48,4 +49,6 @@ public class PodResponse implements Serializable {
 
     /** ISO8601 creation timestamp. */
     private String creationTimestamp;
+
+    private Map<String, String> labels;
 }

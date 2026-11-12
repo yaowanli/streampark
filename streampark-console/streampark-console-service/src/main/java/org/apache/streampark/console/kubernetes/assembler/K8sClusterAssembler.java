@@ -20,13 +20,10 @@ package org.apache.streampark.console.kubernetes.assembler;
 import org.apache.streampark.console.core.assembler.DtoAssembler;
 import org.apache.streampark.console.kubernetes.entity.K8sCluster;
 import org.apache.streampark.console.kubernetes.request.K8sClusterCreateRequest;
-import org.apache.streampark.console.kubernetes.request.K8sClusterUpdateRequest;
+import org.apache.streampark.console.kubernetes.response.K8sClusterDetailResponse;
 import org.apache.streampark.console.kubernetes.response.K8sClusterResponse;
 
-import org.springframework.beans.BeanUtils;
-
 import java.util.List;
-import java.util.stream.Collectors;
 
 /** Converts between kubernetes cluster entities and API request/response contracts. */
 public final class K8sClusterAssembler {
@@ -35,28 +32,18 @@ public final class K8sClusterAssembler {
     }
 
     public static K8sCluster toEntity(K8sClusterCreateRequest request) {
-        if (request == null) {
-            return null;
-        }
-        K8sCluster cluster = new K8sCluster();
-        BeanUtils.copyProperties(request, cluster);
-        return cluster;
-    }
-
-    public static K8sCluster toEntity(K8sClusterUpdateRequest request) {
-        if (request == null) {
-            return null;
-        }
-        K8sCluster cluster = new K8sCluster();
-        BeanUtils.copyProperties(request, cluster);
-        return cluster;
+        return DtoAssembler.toDto(request, K8sCluster.class);
     }
 
     public static K8sClusterResponse toResponse(K8sCluster cluster) {
         return DtoAssembler.toDto(cluster, K8sClusterResponse.class);
     }
 
+    public static K8sClusterDetailResponse toDetailResponse(K8sCluster cluster) {
+        return DtoAssembler.toDto(cluster, K8sClusterDetailResponse.class);
+    }
+
     public static List<K8sClusterResponse> toListResponse(List<K8sCluster> clusters) {
-        return clusters.stream().map(K8sClusterAssembler::toResponse).collect(Collectors.toList());
+        return DtoAssembler.toList(clusters, K8sClusterAssembler::toResponse);
     }
 }

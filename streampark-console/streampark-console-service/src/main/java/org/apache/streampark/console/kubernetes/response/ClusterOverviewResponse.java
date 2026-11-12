@@ -53,7 +53,5 @@ public class ClusterOverviewResponse implements Serializable {
     /** memory usage, bytes; -1 when metrics-server unavailable. */
     private Long memUsedBytes;
 
-    private Long warningEvents;
-
     private Boolean metricsServerAvailable;
 }

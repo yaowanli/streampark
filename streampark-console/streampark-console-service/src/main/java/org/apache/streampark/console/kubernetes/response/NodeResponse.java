@@ -38,8 +38,6 @@ public class NodeResponse implements Serializable {
 
     private String internalIp;
 
-    private Long podsCount;
-
     private Long cpuAllocatableMillis;
 
     private Long cpuUsedMillis;

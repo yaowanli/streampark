@@ -9,7 +9,6 @@ export interface ClusterOverview {
   cpuUsedMillis: number;
   memAllocatableBytes: number;
   memUsedBytes: number;
-  warningEvents?: number;
   metricsServerAvailable: boolean;
 }
 
@@ -19,7 +18,6 @@ export interface K8sNode {
   version?: string;
   status: string;
   internalIp?: string;
-  podsCount?: number;
   cpuAllocatableMillis: number;
   cpuUsedMillis?: number;
   memAllocatableBytes: number;
@@ -47,6 +45,7 @@ export interface K8sPod {
   memoryBytes?: number;
   ip?: string;
   creationTimestamp?: string;
+  labels?: Record<string, string>;
 }
 
 export interface K8sEvent {

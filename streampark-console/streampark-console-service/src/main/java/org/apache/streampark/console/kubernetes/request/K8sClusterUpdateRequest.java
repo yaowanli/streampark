@@ -20,27 +20,14 @@ package org.apache.streampark.console.kubernetes.request;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-
-import java.io.Serializable;
 
 @Getter
 @Setter
-public class K8sClusterUpdateRequest implements Serializable {
+public class K8sClusterUpdateRequest extends K8sClusterCreateRequest {
 
     private static final long serialVersionUID = 1L;
 
     @NotNull
     private Long id;
-
-    @NotBlank
-    private String clusterName;
-
-    @NotBlank
-    private String kubeconfig;
-
-    private String prometheusUrl;
-
-    private String description;
 }

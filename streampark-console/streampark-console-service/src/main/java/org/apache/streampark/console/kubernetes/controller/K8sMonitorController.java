@@ -30,7 +30,8 @@ import org.apache.streampark.console.kubernetes.response.PodResponse;
 import org.apache.streampark.console.kubernetes.service.K8sClusterService;
 import org.apache.streampark.console.kubernetes.service.K8sMonitorService;
 
-import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,7 +40,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Slf4j
 @RestController
 @RequestMapping("k8s/monitor")
 public class K8sMonitorController {
@@ -51,18 +51,21 @@ public class K8sMonitorController {
     private K8sMonitorService k8sMonitorService;
 
     @GetMapping("overview")
+    @RequiresPermissions("k8sMonitor:view")
     public RestResponseBody<ClusterOverviewResponse> overview(@RequestParam Long clusterId) {
         return RestResponseBody.success(
             k8sMonitorService.overview(cluster(clusterId)));
     }
 
     @GetMapping("nodes")
+    @RequiresPermissions("k8sMonitor:view")
     public RestResponseBody<List<NodeResponse>> nodes(@RequestParam Long clusterId) {
         return RestResponseBody.success(
             k8sMonitorService.nodes(cluster(clusterId)));
     }
 
     @GetMapping("workloads")
+    @RequiresPermissions("k8sMonitor:view")
     public RestResponseBody<List<DeploymentResponse>> workloads(
                                                                 @RequestParam Long clusterId,
                                                                 @RequestParam(required = false) String namespace,
@@ -72,6 +75,7 @@ public class K8sMonitorController {
     }
 
     @GetMapping("pods")
+    @RequiresPermissions("k8sMonitor:view")
     public RestResponseBody<List<PodResponse>> pods(
                                                     @RequestParam Long clusterId,
                                                     @RequestParam(required = false) String namespace,
@@ -81,6 +85,7 @@ public class K8sMonitorController {
     }
 
     @GetMapping("events")
+    @RequiresPermissions("k8sMonitor:view")
     public RestResponseBody<List<EventResponse>> events(
                                                         @RequestParam Long clusterId,
                                                         @RequestParam(required = false) String namespace,
@@ -90,12 +95,14 @@ public class K8sMonitorController {
     }
 
     @GetMapping("namespaces")
+    @RequiresPermissions("k8sMonitor:view")
     public RestResponseBody<List<String>> namespaces(@RequestParam Long clusterId) {
         return RestResponseBody.success(
             k8sMonitorService.namespaces(cluster(clusterId)));
     }
 
     @GetMapping("history")
+    @RequiresPermissions("k8sMonitor:view")
     public RestResponseBody<HistoryResponse> history(
                                                      @RequestParam Long clusterId,
                                                      @RequestParam(defaultValue = "cluster") String kind,
@@ -107,6 +114,7 @@ public class K8sMonitorController {
     }
 
     @GetMapping("flinkapps")
+    @RequiresPermissions("k8sMonitor:view")
     public RestResponseBody<List<FlinkAppResponse>> flinkApps(@RequestParam Long clusterId) {
         return RestResponseBody.success(
             k8sMonitorService.flinkApps(cluster(clusterId)));

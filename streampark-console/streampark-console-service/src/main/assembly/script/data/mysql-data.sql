@@ -342,12 +342,12 @@ insert into `t_member` values (100000, 100000, 100000, 100001, now(), now());
 -- ----------------------------
 -- Kubernetes menus (cluster management + monitoring)
 -- ----------------------------
-insert into `t_menu` values (160000, 0, 'menu.kubernetes', '/kubernetes', 'PageView', null, 0, '0', 1, 6, now(), now());
-insert into `t_menu` values (160100, 160000, 'menu.kubernetes.cluster', '/kubernetes/cluster', 'kubernetes/cluster/View', null, null, '0', 1, 1, now(), now());
+insert into `t_menu` values (160000, 0, 'kubernetes.menu', '/kubernetes', 'PageView', null, null, '0', 1, 6, now(), now());
+insert into `t_menu` values (160100, 160000, 'menu.kubernetes.cluster', '/kubernetes/cluster', 'kubernetes/cluster/View', 'k8sCluster:view', null, '0', 1, 1, now(), now());
 insert into `t_menu` values (160101, 160100, 'k8s cluster add', null, null, 'k8sCluster:create', '', '1', 1, 0, null, now());
 insert into `t_menu` values (160102, 160100, 'k8s cluster edit', null, null, 'k8sCluster:update', '', '1', 1, 0, null, now());
 insert into `t_menu` values (160103, 160100, 'k8s cluster delete', null, null, 'k8sCluster:delete', '', '1', 1, 0, null, now());
-insert into `t_menu` values (160200, 160000, 'menu.kubernetes.monitor', '/kubernetes/monitor', 'kubernetes/monitor/index', null, null, '0', 1, 2, now(), now());
+insert into `t_menu` values (160200, 160000, 'menu.kubernetes.monitor', '/kubernetes/monitor', 'kubernetes/monitor/index', 'k8sMonitor:view', null, '0', 1, 2, now(), now());
 
 insert into `t_role_menu` values (100111, 100001, 160000);
 insert into `t_role_menu` values (100112, 100001, 160100);
