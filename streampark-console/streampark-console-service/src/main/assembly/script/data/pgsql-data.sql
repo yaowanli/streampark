@@ -287,3 +287,26 @@ insert into "public"."t_user" values (100000, 'admin', '', 'rh8b1ojwog777yrg0dae
 -- Records of t_member
 -- ----------------------------
 insert into "public"."t_member" values (100000, 100000, 100000, 100001, now(), now());
+
+-- ----------------------------
+-- Kubernetes menus (cluster management + monitoring)
+-- ----------------------------
+insert into "public"."t_menu" values (160000, 0, 'menu.kubernetes', '/kubernetes', 'PageView', null, 0, '0', '1', 6, now(), now());
+insert into "public"."t_menu" values (160100, 160000, 'menu.kubernetes.cluster', '/kubernetes/cluster', 'kubernetes/cluster/View', null, null, '0', '1', 1, now(), now());
+insert into "public"."t_menu" values (160101, 160100, 'add k8s cluster', null, null, 'k8sCluster:create', '', '1', '0', null, now(), now());
+insert into "public"."t_menu" values (160102, 160100, 'edit k8s cluster', null, null, 'k8sCluster:update', '', '1', '0', null, now(), now());
+insert into "public"."t_menu" values (160103, 160100, 'delete k8s cluster', null, null, 'k8sCluster:delete', '', '1', '0', null, now(), now());
+insert into "public"."t_menu" values (160200, 160000, 'menu.kubernetes.monitor', '/kubernetes/monitor', 'kubernetes/monitor/index', null, null, '0', '1', 2, now(), now());
+
+insert into "public"."t_role_menu" (role_id, menu_id) values (100001, 160000);
+insert into "public"."t_role_menu" (role_id, menu_id) values (100001, 160100);
+insert into "public"."t_role_menu" (role_id, menu_id) values (100001, 160101);
+insert into "public"."t_role_menu" (role_id, menu_id) values (100001, 160102);
+insert into "public"."t_role_menu" (role_id, menu_id) values (100001, 160103);
+insert into "public"."t_role_menu" (role_id, menu_id) values (100001, 160200);
+insert into "public"."t_role_menu" (role_id, menu_id) values (100002, 160000);
+insert into "public"."t_role_menu" (role_id, menu_id) values (100002, 160100);
+insert into "public"."t_role_menu" (role_id, menu_id) values (100002, 160101);
+insert into "public"."t_role_menu" (role_id, menu_id) values (100002, 160102);
+insert into "public"."t_role_menu" (role_id, menu_id) values (100002, 160103);
+insert into "public"."t_role_menu" (role_id, menu_id) values (100002, 160200);
