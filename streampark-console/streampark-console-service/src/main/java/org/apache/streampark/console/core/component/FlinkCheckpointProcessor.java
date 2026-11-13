@@ -92,8 +92,13 @@ public class FlinkCheckpointProcessor {
         if (CheckPointStatusEnum.COMPLETED == status) {
             if (shouldStoreAsSavepoint(checkPointKey, checkPoint)) {
                 savepointedCache.put(checkPointKey.getSavePointId(), DEFAULT_FLAG_BYTE);
-                saveSavepoint(checkPoint, application.getId());
-                flinkAppHttpWatcher.cleanSavepoint(application);
+                try {
+                    saveSavepoint(checkPoint, application.getId());
+                } finally {
+                    // the SAVEPOINT_CACHE entry must be released even if persisting fails,
+                    // otherwise the watcher keeps resetting the option state to SAVEPOINTING
+                    flinkAppHttpWatcher.cleanSavepoint(application);
+                }
                 return;
             }
 

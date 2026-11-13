@@ -842,6 +842,8 @@ public class FlinkApplicationActionServiceImpl
             }
         } else if (FlinkDeployMode.isKubernetesMode(application.getDeployModeEnum())) {
             properties.put(FlinkOptions.KUBERNETES_IMAGE_PULL_POLICY.key(), "Always");
+            // for kubernetes mode, hotParams currently only carries the service account
+            properties.putAll(application.getHotParamsMap());
         }
 
         if (FlinkDeployMode.isKubernetesApplicationMode(application.getDeployMode())) {

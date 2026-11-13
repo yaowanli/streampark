@@ -63,6 +63,7 @@ export interface HistoryRecord {
   k8sNamespace: Array<string>;
   k8sSessionClusterId: Array<string>;
   flinkImage: Array<string>;
+  serviceAccount: Array<string>;
 }
 
 export const useCreateAndEditSchema = (
@@ -78,6 +79,7 @@ export const useCreateAndEditSchema = (
     k8sNamespace: [],
     k8sSessionClusterId: [],
     flinkImage: [],
+    serviceAccount: [],
   });
 
   const { createErrorModal } = useMessage();
@@ -260,7 +262,7 @@ export const useCreateAndEditSchema = (
         render: ({ model, field }) =>
           renderInputDropdown(model, field, {
             placeholder: t('flink.app.addAppTips.serviceAccountPlaceholder'),
-            options: unref(historyRecord)?.k8sNamespace || [],
+            options: unref(historyRecord)?.serviceAccount || [],
           }),
       },
       {

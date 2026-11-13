@@ -68,6 +68,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -170,6 +171,9 @@ public class FlinkAppHttpWatcher {
 
     private static final Byte DEFAULT_FLAG_BYTE = Byte.valueOf("0");
 
+    /** Apps whose watch task is currently queued or running; guards against duplicate restarts/alerts. */
+    private static final Set<Long> WATCHING_IN_PROGRESS = ConcurrentHashMap.newKeySet();
+
     @Qualifier("flinkRestAPIWatchingExecutor")
     @Autowired
     private Executor watchExecutor;
@@ -215,22 +219,38 @@ public class FlinkAppHttpWatcher {
     }
 
     private void watch(Long id, FlinkApplication application) {
-        watchExecutor.execute(
-            () -> {
-                try {
-                    // query status from flink rest api
-                    getStateFromFlink(application);
-                    cleanupLost(application);
-                } catch (Exception flinkException) {
-                    // query status from yarn rest api
+        // Claim synchronously before submitting: the scheduler ticks every second, so without
+        // the claim a slow watch queues a duplicate task per tick, and each queued duplicate
+        // can re-trigger restarts and alerts for the same job.
+        if (!WATCHING_IN_PROGRESS.add(id)) {
+            log.debug(
+                "[StreamPark][FlinkAppHttpWatcher] app {} watch already in progress, skipping", id);
+            return;
+        }
+        try {
+            watchExecutor.execute(
+                () -> {
                     try {
-                        getStateFromYarn(application);
+                        // query status from flink rest api
+                        getStateFromFlink(application);
                         cleanupLost(application);
-                    } catch (Exception yarnException) {
-                        doStateFailed(application);
+                    } catch (Exception flinkException) {
+                        // query status from yarn rest api
+                        try {
+                            getStateFromYarn(application);
+                            cleanupLost(application);
+                        } catch (Exception yarnException) {
+                            doStateFailed(application);
+                        }
+                    } finally {
+                        WATCHING_IN_PROGRESS.remove(id);
                     }
-                }
-            });
+                });
+        } catch (Exception e) {
+            // release the claim when the task could not be queued (e.g. queue full)
+            WATCHING_IN_PROGRESS.remove(id);
+            throw e;
+        }
     }
 
     private void cleanupLost(FlinkApplication application) {
