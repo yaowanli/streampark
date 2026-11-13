@@ -104,11 +104,13 @@ public class ShiroRealm extends AuthorizingRealm {
                 }
                 break;
             case OPENAPI:
-                // Check whether the token belongs to the api and whether the permission is valid
+                // Check whether the token belongs to the api and whether the permission is valid.
+                // Tokens are AES-GCM encrypted with a random IV, so ciphertexts can never be
+                // compared directly - compare the decrypted JWT payload instead.
                 AccessToken accessToken = accessTokenService.getByUserId(userId);
                 try {
-                    String encryptToken = JWTUtil.encrypt(credential);
-                    if (accessToken == null || !accessToken.getToken().equals(encryptToken)) {
+                    String storedJwt = accessToken == null ? null : JWTUtil.decrypt(accessToken.getToken());
+                    if (storedJwt == null || !storedJwt.equals(credential)) {
                         throw new AuthenticationException("the openapi authorization token is invalid");
                     }
                 } catch (Exception e) {

@@ -98,3 +98,9 @@ sso:
         # Optional, change by authentication client
         # Please replace and fill in your client config below when enabled SSO
 
+
+# Midea robot (美信) alert, piggybacks on the email alert chain.
+# Leave empty to disable robot push.
+midea:
+    robot:
+        url:

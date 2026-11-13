@@ -23,6 +23,7 @@ import org.apache.streampark.console.core.service.ResourceService;
 import org.apache.streampark.console.core.service.application.ApplicationLogService;
 import org.apache.streampark.console.core.service.application.FlinkApplicationActionService;
 import org.apache.streampark.console.core.service.application.FlinkApplicationBackupService;
+import org.apache.streampark.console.core.service.application.FlinkApplicationBatchService;
 import org.apache.streampark.console.core.service.application.FlinkApplicationInfoService;
 import org.apache.streampark.console.core.service.application.FlinkApplicationManageService;
 
@@ -66,6 +67,9 @@ class FlinkApplicationControllerMvcTest {
 
     @MockBean
     private ResourceService resourceService;
+
+    @MockBean
+    private FlinkApplicationBatchService applicationBatchService;
 
     @Test
     void checkNameShouldRejectBlankJobName() throws Exception {

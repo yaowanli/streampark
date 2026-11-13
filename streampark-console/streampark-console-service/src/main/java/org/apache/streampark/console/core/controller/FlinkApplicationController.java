@@ -47,6 +47,7 @@ import org.apache.streampark.console.core.request.flink.FlinkAppListQueryRequest
 import org.apache.streampark.console.core.request.flink.FlinkAppMappingRequest;
 import org.apache.streampark.console.core.request.flink.FlinkAppStartRequest;
 import org.apache.streampark.console.core.request.flink.FlinkAppUpdateRequest;
+import org.apache.streampark.console.core.request.flink.FlinkBatchAppRequest;
 import org.apache.streampark.console.core.response.app.AppBackupResponse;
 import org.apache.streampark.console.core.response.app.AppOptLogResponse;
 import org.apache.streampark.console.core.response.flink.FlinkAppDashboardResponse;
@@ -55,6 +56,7 @@ import org.apache.streampark.console.core.service.ResourceService;
 import org.apache.streampark.console.core.service.application.ApplicationLogService;
 import org.apache.streampark.console.core.service.application.FlinkApplicationActionService;
 import org.apache.streampark.console.core.service.application.FlinkApplicationBackupService;
+import org.apache.streampark.console.core.service.application.FlinkApplicationBatchService;
 import org.apache.streampark.console.core.service.application.FlinkApplicationInfoService;
 import org.apache.streampark.console.core.service.application.FlinkApplicationManageService;
 
@@ -65,6 +67,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -99,6 +102,9 @@ public class FlinkApplicationController {
 
     @Autowired
     private ResourceService resourceService;
+
+    @Autowired
+    private FlinkApplicationBatchService applicationBatchService;
 
     @PostMapping("get")
     @Permission(app = "#request.id")
@@ -200,6 +206,42 @@ public class FlinkApplicationController {
     public RestResponseBody<Void> abort(@Valid @FormOrJson FlinkAppIdRequest request) {
         applicationActionService.abort(request.getId());
         return RestResponseBody.success();
+    }
+
+    @PostMapping("batchStart")
+    @RequiresPermissions("app:start")
+    public RestResponseBody<Boolean> batchStart(@RequestBody FlinkBatchAppRequest request) {
+        String errors = applicationBatchService.batchStart(request.getIds(), request.getTeamId());
+        return batchResult(errors);
+    }
+
+    @PostMapping("batchCancel")
+    @RequiresPermissions("app:cancel")
+    public RestResponseBody<Boolean> batchCancel(@RequestBody FlinkBatchAppRequest request) {
+        String errors = applicationBatchService.batchCancel(request.getIds(), request.getTeamId());
+        return batchResult(errors);
+    }
+
+    @PostMapping("batchAbort")
+    @RequiresPermissions("app:cancel")
+    public RestResponseBody<Boolean> batchAbort(@RequestBody FlinkBatchAppRequest request) {
+        String errors = applicationBatchService.batchAbort(request.getIds(), request.getTeamId());
+        return batchResult(errors);
+    }
+
+    @PostMapping("batchBuild")
+    @RequiresPermissions("app:create")
+    public RestResponseBody<Boolean> batchBuild(@RequestBody FlinkBatchAppRequest request) {
+        boolean forceBuild = Boolean.TRUE.equals(request.getForceBuild());
+        String errors = applicationBatchService.batchBuild(request.getIds(), request.getTeamId(), forceBuild);
+        return batchResult(errors);
+    }
+
+    private RestResponseBody<Boolean> batchResult(String errors) {
+        if (errors == null || errors.isEmpty()) {
+            return RestResponseBody.success(Boolean.TRUE);
+        }
+        return RestResponseBody.success(Boolean.FALSE).message(errors);
     }
 
     @PostMapping("yarn")

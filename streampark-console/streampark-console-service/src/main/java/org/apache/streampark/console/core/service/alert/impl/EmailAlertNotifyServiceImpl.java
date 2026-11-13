@@ -43,6 +43,12 @@ public class EmailAlertNotifyServiceImpl implements AlertNotifyService {
 
     private final Template template = FreemarkerUtils.loadTemplateFile("alert-email.ftl");
 
+    private final MideaRobotAlertNotify mideaRobotAlertNotify;
+
+    public EmailAlertNotifyServiceImpl(MideaRobotAlertNotify mideaRobotAlertNotify) {
+        this.mideaRobotAlertNotify = mideaRobotAlertNotify;
+    }
+
     @Override
     public boolean doAlert(AlertConfigRequest alertConfig, AlertTemplate template) throws AlertException {
         EmailConfig emailConfig = Optional.ofNullable(EmailConfig.fromSetting())
@@ -52,6 +58,11 @@ public class EmailAlertNotifyServiceImpl implements AlertNotifyService {
             throw new AlertException("Please configure a valid contacts");
         }
         String[] emails = contacts.split(",");
+        try {
+            mideaRobotAlertNotify.alert(template, emails);
+        } catch (Exception e) {
+            log.error("Midea robot alert failed, ignore it", e);
+        }
         return sendEmail(emailConfig, template, emails);
     }
 

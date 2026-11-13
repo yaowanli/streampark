@@ -29,19 +29,24 @@ import org.apache.streampark.console.core.component.ApiTypeScriptGenerator;
 import org.apache.streampark.console.core.component.OpenAPIComponent;
 import org.apache.streampark.console.core.request.flink.FlinkAppCancelRequest;
 import org.apache.streampark.console.core.request.flink.FlinkAppStartRequest;
+import org.apache.streampark.console.core.request.flink.FlinkBatchAppRequest;
 import org.apache.streampark.console.core.request.flink.OpenAPICurlRequest;
 import org.apache.streampark.console.core.request.flink.OpenAPISchemaRequest;
 import org.apache.streampark.console.core.service.application.FlinkApplicationActionService;
+import org.apache.streampark.console.core.service.application.FlinkApplicationBatchService;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+
+import java.util.List;
 
 @Validated
 @RestController
@@ -56,6 +61,70 @@ public class OpenAPIController {
 
     @Autowired
     private FlinkApplicationActionService applicationActionService;
+
+    @Autowired
+    private FlinkApplicationBatchService applicationBatchService;
+
+    @OpenAPI(name = "flinkBatchStart", header = {
+            @OpenAPI.Param(name = "Authorization", description = "Access authorization token", required = true, type = String.class)
+    }, param = {
+            @OpenAPI.Param(name = "ids", description = "batch start flink application ids", required = true, type = List.class),
+            @OpenAPI.Param(name = "teamId", description = "current user teamId", required = true, type = Long.class)
+    })
+    @PostMapping("app/batchStart")
+    @RequiresPermissions("app:start")
+    public RestResponseBody<Boolean> flinkBatchStart(@RequestBody FlinkBatchAppRequest request) {
+        String errors = applicationBatchService.batchStart(request.getIds(), request.getTeamId());
+        return batchResult(errors);
+    }
+
+    @OpenAPI(name = "flinkBatchCancel", header = {
+            @OpenAPI.Param(name = "Authorization", description = "Access authorization token", required = true, type = String.class)
+    }, param = {
+            @OpenAPI.Param(name = "ids", description = "batch cancel flink application ids", required = true, type = List.class),
+            @OpenAPI.Param(name = "teamId", description = "current user teamId", required = true, type = Long.class)
+    })
+    @PostMapping("app/batchCancel")
+    @RequiresPermissions("app:cancel")
+    public RestResponseBody<Boolean> flinkBatchCancel(@RequestBody FlinkBatchAppRequest request) {
+        String errors = applicationBatchService.batchCancel(request.getIds(), request.getTeamId());
+        return batchResult(errors);
+    }
+
+    @OpenAPI(name = "flinkBatchAbort", header = {
+            @OpenAPI.Param(name = "Authorization", description = "Access authorization token", required = true, type = String.class)
+    }, param = {
+            @OpenAPI.Param(name = "ids", description = "batch force stop flink application ids", required = true, type = List.class),
+            @OpenAPI.Param(name = "teamId", description = "current user teamId", required = true, type = Long.class)
+    })
+    @PostMapping("app/batchAbort")
+    @RequiresPermissions("app:cancel")
+    public RestResponseBody<Boolean> flinkBatchAbort(@RequestBody FlinkBatchAppRequest request) {
+        String errors = applicationBatchService.batchAbort(request.getIds(), request.getTeamId());
+        return batchResult(errors);
+    }
+
+    @OpenAPI(name = "flinkBatchBuild", header = {
+            @OpenAPI.Param(name = "Authorization", description = "Access authorization token", required = true, type = String.class)
+    }, param = {
+            @OpenAPI.Param(name = "ids", description = "batch build flink application ids", required = true, type = List.class),
+            @OpenAPI.Param(name = "teamId", description = "current user teamId", required = true, type = Long.class),
+            @OpenAPI.Param(name = "forceBuild", description = "force build even if a pipeline is already running", required = false, type = Boolean.class, defaultValue = "false")
+    })
+    @PostMapping("app/batchBuild")
+    @RequiresPermissions("app:create")
+    public RestResponseBody<Boolean> flinkBatchBuild(@RequestBody FlinkBatchAppRequest request) {
+        boolean forceBuild = Boolean.TRUE.equals(request.getForceBuild());
+        String errors = applicationBatchService.batchBuild(request.getIds(), request.getTeamId(), forceBuild);
+        return batchResult(errors);
+    }
+
+    private RestResponseBody<Boolean> batchResult(String errors) {
+        if (errors == null || errors.isEmpty()) {
+            return RestResponseBody.success(Boolean.TRUE);
+        }
+        return RestResponseBody.success(Boolean.FALSE).message(errors);
+    }
 
     @OpenAPI(name = "flinkStart", header = {
             @OpenAPI.Param(name = "Authorization", description = "Access authorization token", required = true, type = String.class)

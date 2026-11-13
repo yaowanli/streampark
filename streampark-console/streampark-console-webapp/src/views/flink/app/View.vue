@@ -33,7 +33,13 @@
     Row,
     Col,
   } from 'ant-design-vue';
-  import { fetchAppRecord } from '/@/api/flink/app';
+  import {
+    fetchAppRecord,
+    fetchBatchStart,
+    fetchBatchCancel,
+    fetchBatchAbort,
+    fetchBatchBuild,
+  } from '/@/api/flink/app';
   import { useTable } from '/@/components/Table';
   import { PageWrapper } from '/@/components/Page';
   import { BasicTable, TableAction } from '/@/components/Table';
@@ -41,6 +47,8 @@
   import { releaseTitleMap } from './data';
   import { useDrawer } from '/@/components/Drawer';
   import { useModal } from '/@/components/Modal';
+  import { useMessage } from '/@/hooks/web/useMessage';
+  import { useUserStore } from '/@/store/modules/user';
 
   import StartApplicationModal from './components/AppView/StartApplicationModal.vue';
   import StopApplicationModal from './components/AppView/StopApplicationModal.vue';
@@ -62,6 +70,10 @@
     name: 'AppView',
   });
   const { t } = useI18n();
+  const { Swal, createMessage } = useMessage();
+  const userStore = useUserStore();
+  const selectedRowKeys = ref<string[]>([]);
+  const batchLoading = ref(false);
   const searchRef = ref<Recordable>({
     tags: undefined,
     owner: undefined,
@@ -92,9 +104,17 @@
   const [registerLogModal, { openModal: openLogModal }] = useModal();
   const [registerBuildDrawer, { openDrawer: openBuildDrawer }] = useDrawer();
 
-  const [registerTable, { reload, getLoading, setPagination }] = useTable({
+  const [registerTable, { reload, getLoading, setPagination, getSelectRows, clearSelectedRowKeys }] =
+    useTable({
     rowKey: 'id',
     api: fetchAppRecord,
+    rowSelection: {
+      type: 'checkbox',
+      selectedRowKeys: selectedRowKeys,
+      onChange: (keys: string[]) => {
+        selectedRowKeys.value = keys;
+      },
+    },
     beforeFetch: (params) => {
       if (Reflect.has(params, 'state')) {
         if (params.state && params.state.length > 0) {
@@ -231,6 +251,53 @@
     });
   }
 
+  const batchActionMap = {
+    start: { textKey: 'flink.app.batchStart', fn: fetchBatchStart },
+    cancel: { textKey: 'flink.app.batchCancel', fn: fetchBatchCancel },
+    abort: { textKey: 'flink.app.batchAbort', fn: fetchBatchAbort },
+    build: { textKey: 'flink.app.batchBuild', fn: fetchBatchBuild },
+  };
+
+  async function handleBatch(option: keyof typeof batchActionMap) {
+    const rows = getSelectRows<AppListRecord>();
+    if (!rows || rows.length === 0) {
+      createMessage.warning(t('flink.app.batchSelectTip'));
+      return;
+    }
+    const ids = rows.map((r) => r.id);
+    const { textKey, fn } = batchActionMap[option];
+    const actionText = t(textKey);
+    const { isConfirmed } = await Swal.fire({
+      icon: 'warning',
+      title: actionText,
+      text: t('flink.app.batchConfirmTip').replace('%s', String(ids.length)).replace('%a', actionText),
+      showCancelButton: true,
+      confirmButtonText: t('common.okText'),
+      cancelButtonText: t('common.cancelText'),
+    });
+    if (!isConfirmed) {
+      return;
+    }
+    batchLoading.value = true;
+    try {
+      const res = await fn({ ids, teamId: userStore.teamId });
+      const body = res?.data || {};
+      if (body.data === false) {
+        await Swal.fire({
+          icon: 'warning',
+          title: `${actionText} - ${t('flink.app.batchPartialFail')}`,
+          text: body.message || t('flink.app.batchPartialFailTip'),
+        });
+      } else {
+        createMessage.success(`${actionText} ${t('flink.app.batchSubmitted')}`);
+      }
+      clearSelectedRowKeys();
+      handlePageDataReload(false);
+    } finally {
+      batchLoading.value = false;
+    }
+  }
+
   const handleResetReload = useDebounceFn(() => {
     setPagination({
       current: 1,
@@ -334,7 +401,43 @@
                 </Col>
               </Row>
             </Form>
-            <div v-auth="'app:create'">
+            <div class="flex items-center">
+              <Button
+                v-auth="'app:start'"
+                class="mr-2"
+                :loading="batchLoading"
+                :disabled="selectedRowKeys.length === 0"
+                @click="handleBatch('start')"
+              >
+                {{ t('flink.app.batchStart') }}
+              </Button>
+              <Button
+                v-auth="'app:cancel'"
+                class="mr-2"
+                :loading="batchLoading"
+                :disabled="selectedRowKeys.length === 0"
+                @click="handleBatch('cancel')"
+              >
+                {{ t('flink.app.batchCancel') }}
+              </Button>
+              <Button
+                v-auth="'app:cancel'"
+                class="mr-2"
+                :loading="batchLoading"
+                :disabled="selectedRowKeys.length === 0"
+                @click="handleBatch('abort')"
+              >
+                {{ t('flink.app.batchAbort') }}
+              </Button>
+              <Button
+                v-auth="'app:create'"
+                class="mr-2"
+                :loading="batchLoading"
+                :disabled="selectedRowKeys.length === 0"
+                @click="handleBatch('build')"
+              >
+                {{ t('flink.app.batchBuild') }}
+              </Button>
               <Button
                 id="e2e-flinkapp-create-btn"
                 type="primary"

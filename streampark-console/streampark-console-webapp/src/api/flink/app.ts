@@ -47,6 +47,10 @@ enum APP_API {
   OPTION_LOG = '/flink/app/opt_log',
   DELETE_LOG = '/flink/app/delete/opt_log',
   CHECK_SAVEPOINT_PATH = '/flink/app/check/savepoint_path',
+  BATCH_START = '/flink/app/batchStart',
+  BATCH_CANCEL = '/flink/app/batchCancel',
+  BATCH_ABORT = '/flink/app/batchAbort',
+  BATCH_BUILD = '/flink/app/batchBuild',
 }
 
 /**
@@ -173,6 +177,38 @@ export function fetchAbort(data: { id: string }): Promise<boolean> {
 
 export function fetchStart(data): Promise<AxiosResponse<Result>> {
   return defHttp.post({ url: APP_API.START, data }, { isReturnNativeResponse: true });
+}
+
+/**
+ * Batch operations return the native response so partial failures
+ * (status success + data=false + per-app error message) can be shown.
+ */
+export function fetchBatchStart(data: { ids: string[]; teamId?: string }): Promise<AxiosResponse<Result>> {
+  return defHttp.post(
+    { url: APP_API.BATCH_START, data, headers: { 'Content-Type': ContentTypeEnum.JSON } },
+    { isReturnNativeResponse: true },
+  );
+}
+
+export function fetchBatchCancel(data: { ids: string[]; teamId?: string }): Promise<AxiosResponse<Result>> {
+  return defHttp.post(
+    { url: APP_API.BATCH_CANCEL, data, headers: { 'Content-Type': ContentTypeEnum.JSON } },
+    { isReturnNativeResponse: true },
+  );
+}
+
+export function fetchBatchAbort(data: { ids: string[]; teamId?: string }): Promise<AxiosResponse<Result>> {
+  return defHttp.post(
+    { url: APP_API.BATCH_ABORT, data, headers: { 'Content-Type': ContentTypeEnum.JSON } },
+    { isReturnNativeResponse: true },
+  );
+}
+
+export function fetchBatchBuild(data: { ids: string[]; teamId?: string }): Promise<AxiosResponse<Result>> {
+  return defHttp.post(
+    { url: APP_API.BATCH_BUILD, data, headers: { 'Content-Type': ContentTypeEnum.JSON } },
+    { isReturnNativeResponse: true },
+  );
 }
 
 export function fetchCopy(data): Promise<AxiosResponse<any>> {
