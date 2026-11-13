@@ -734,4 +734,20 @@ create table `t_spark_app_backup` (
 ) engine=innodb auto_increment=100000 default charset=utf8mb4 collate=utf8mb4_general_ci;
 
 
+-- ----------------------------
+-- table structure for t_k8s_cluster
+-- ----------------------------
+drop table if exists `t_k8s_cluster`;
+create table `t_k8s_cluster` (
+  `id` bigint not null primary key auto_increment comment 'cluster id',
+  `cluster_name` varchar(128) collate utf8mb4_general_ci not null comment 'display name of the kubernetes cluster',
+  `kubeconfig` text collate utf8mb4_general_ci not null comment 'kubeconfig file content',
+  `prometheus_url` varchar(255) collate utf8mb4_general_ci default null comment 'prometheus server url, nullable to use realtime only',
+  `description` varchar(255) collate utf8mb4_general_ci default null comment 'description of the kubernetes cluster',
+  `create_time` datetime default null comment 'create time',
+  `modify_time` datetime default null comment 'modify time',
+  unique key `unq_cluster_name` (`cluster_name`) using btree
+) engine = innodb default charset = utf8mb4 collate = utf8mb4_general_ci;
+
+
 set foreign_key_checks = 1;

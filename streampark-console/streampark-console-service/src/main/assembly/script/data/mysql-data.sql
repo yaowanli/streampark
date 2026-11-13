@@ -338,4 +338,28 @@ insert into `t_user` values (100000, 'admin', '', 'rh8b1ojwog777yrg0daesf04gk', 
 -- ----------------------------
 insert into `t_member` values (100000, 100000, 100000, 100001, now(), now());
 
+
+-- ----------------------------
+-- Kubernetes menus (cluster management + monitoring)
+-- ----------------------------
+insert into `t_menu` values (160000, 0, 'kubernetes.menu', '/kubernetes', 'PageView', null, null, '0', 1, 6, now(), now());
+insert into `t_menu` values (160100, 160000, 'menu.kubernetes.cluster', '/kubernetes/cluster', 'kubernetes/cluster/View', 'k8sCluster:view', null, '0', 1, 1, now(), now());
+insert into `t_menu` values (160101, 160100, 'k8s cluster add', null, null, 'k8sCluster:create', '', '1', 1, 0, null, now());
+insert into `t_menu` values (160102, 160100, 'k8s cluster edit', null, null, 'k8sCluster:update', '', '1', 1, 0, null, now());
+insert into `t_menu` values (160103, 160100, 'k8s cluster delete', null, null, 'k8sCluster:delete', '', '1', 1, 0, null, now());
+insert into `t_menu` values (160200, 160000, 'menu.kubernetes.monitor', '/kubernetes/monitor', 'kubernetes/monitor/index', 'k8sMonitor:view', null, '0', 1, 2, now(), now());
+
+insert into `t_role_menu` values (100111, 100001, 160000);
+insert into `t_role_menu` values (100112, 100001, 160100);
+insert into `t_role_menu` values (100113, 100001, 160101);
+insert into `t_role_menu` values (100114, 100001, 160102);
+insert into `t_role_menu` values (100115, 100001, 160103);
+insert into `t_role_menu` values (100116, 100001, 160200);
+insert into `t_role_menu` values (100117, 100002, 160000);
+insert into `t_role_menu` values (100118, 100002, 160100);
+insert into `t_role_menu` values (100119, 100002, 160101);
+insert into `t_role_menu` values (100120, 100002, 160102);
+insert into `t_role_menu` values (100121, 100002, 160103);
+insert into `t_role_menu` values (100122, 100002, 160200);
+
 set foreign_key_checks = 1;

@@ -27,6 +27,7 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authz.UnauthenticatedException;
 
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -69,6 +70,16 @@ public class GlobalExceptionHandler {
     public RestResponseBody<Void> handleException(AbstractApiException e) {
         log.error("api exception:", e);
         return RestResponseBody.fail(e.getResponseCode(), e.getMessage());
+    }
+
+    @ExceptionHandler(value = KubernetesClientException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public RestResponseBody<Void> handleKubernetesClientException(KubernetesClientException e) {
+        log.error("kubernetes api error:", e);
+        String message = e.getStatus() == null
+            ? String.valueOf(e.getMessage())
+            : String.format("http %d: %s", e.getCode(), e.getStatus().getMessage());
+        return RestResponseBody.fail(ResponseCode.CODE_FAIL, "kubernetes api error: " + message);
     }
 
     @ExceptionHandler(value = Exception.class)

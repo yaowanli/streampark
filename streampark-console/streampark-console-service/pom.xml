@@ -249,6 +249,18 @@
             <version>${mybatis-plus.version}</version>
         </dependency>
 
+        <!-- kubernetes client -->
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-client</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-server-mock</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- sql print -->
         <dependency>
             <groupId>p6spy</groupId>

@@ -52,6 +52,7 @@
     "axios": "^1.4.0",
     "crypto-js": "^4.1.1",
     "dayjs": "^1.11.9",
+    "echarts": "^5.5.1",
     "lodash-es": "^4.17.21",
     "monaco-editor": "^0.40.0",
     "nprogress": "^0.2.0",

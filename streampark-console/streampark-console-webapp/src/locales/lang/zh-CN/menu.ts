@@ -49,4 +49,9 @@ export default {
     yarnQueue: 'Yarn 队列',
     flinkGateway: 'FLink 网关',
   },
+  kubernetes: {
+    menu: 'Kubernetes',
+    cluster: 'K8S 集群',
+    monitor: 'K8S 监控',
+  },
 };
