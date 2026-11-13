@@ -17,6 +17,7 @@
 
 package org.apache.streampark.console.kubernetes.response;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -37,12 +38,15 @@ public class PodResponse implements Serializable {
 
     private String phase;
 
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long restarts;
 
     /** -1 when metrics-server unavailable. */
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long cpuMillis;
 
     /** -1 when metrics-server unavailable. */
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long memoryBytes;
 
     private String ip;

@@ -111,7 +111,7 @@
   import type { ClusterOverview, K8sEvent } from '/@/api/kubernetes/monitor.type';
   import { useI18n } from '/@/hooks/web/useI18n';
   import ResourceRingChart from '../components/ResourceRingChart.vue';
-  import { formatCpu, formatMemory } from '../utils';
+  import { formatCpu, formatMemory, formatTimestamp } from '../utils';
 
   export default defineComponent({
     name: 'K8sOverviewTab',

@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 export default {
+  action: 'Actions',
   okText: 'OK',
   closeText: 'Close',
   detailText: 'Detail',

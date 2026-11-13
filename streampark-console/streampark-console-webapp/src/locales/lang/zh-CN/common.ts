@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 export default {
+  action: '操作',
   okText: '确认',
   closeText: '关闭',
   detailText: '详情',

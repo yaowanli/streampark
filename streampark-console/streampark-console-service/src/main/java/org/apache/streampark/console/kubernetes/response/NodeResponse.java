@@ -17,6 +17,7 @@
 
 package org.apache.streampark.console.kubernetes.response;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -38,11 +39,15 @@ public class NodeResponse implements Serializable {
 
     private String internalIp;
 
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long cpuAllocatableMillis;
 
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long cpuUsedMillis;
 
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long memAllocatableBytes;
 
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long memUsedBytes;
 }

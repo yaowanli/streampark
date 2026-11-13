@@ -17,6 +17,7 @@
 
 package org.apache.streampark.console.kubernetes.response;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -29,28 +30,38 @@ public class ClusterOverviewResponse implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long nodesTotal;
 
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long nodesReady;
 
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long podsRunning;
 
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long podsPending;
 
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long podsFailed;
 
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long namespaces;
 
     /** cpu allocatable, millis. */
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long cpuAllocatableMillis;
 
     /** cpu usage, millis; -1 when metrics-server unavailable. */
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long cpuUsedMillis;
 
     /** memory allocatable, bytes. */
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long memAllocatableBytes;
 
     /** memory usage, bytes; -1 when metrics-server unavailable. */
+    @JsonSerialize(using = LongAsNumberSerializer.class)
     private Long memUsedBytes;
 
     private Boolean metricsServerAvailable;
