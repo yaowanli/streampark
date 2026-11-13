@@ -106,10 +106,27 @@ public class K8sClusterController {
             response.setVersion(client.getKubernetesVersion().getGitVersion());
             response.setMessage("Connection succeeded.");
         } catch (KubernetesClientException | IllegalArgumentException e) {
-            log.warn("Kubernetes cluster connection test failed: {}", e.getMessage());
+            log.warn("Kubernetes cluster connection test failed: {}", e.getMessage(), e);
             response.setConnected(false);
-            response.setMessage(e.getMessage());
+            response.setMessage(describeFailure(e));
         }
         return RestResponseBody.success(response);
+    }
+
+    /**
+     * fabric8 wraps connection failures in a generic "An error has occurred." top message; the
+     * actionable detail (refused / timed out / TLS handshake) lives deeper in the cause chain.
+     */
+    private static String describeFailure(Throwable error) {
+        String message = error.getMessage();
+        Throwable cause = error;
+        while (cause.getCause() != null && cause.getCause() != cause) {
+            cause = cause.getCause();
+            String detail = cause.getMessage();
+            if (detail != null && !detail.isBlank() && !detail.equals(message)) {
+                message = detail;
+            }
+        }
+        return message == null ? "unknown error" : message;
     }
 }
