@@ -159,6 +159,11 @@ public final class Workspace {
         if (configuredUri.getScheme() == null) {
             return qualifyWithDefaultFileSystem(configured);
         }
+        if ("file".equalsIgnoreCase(configuredUri.getScheme())) {
+            // deployments without a Hadoop environment keep the remote workspace on the local
+            // filesystem; yarn-application flows still require a real HDFS and fail on their own
+            return normalizeRoot(configuredUri.getPath());
+        }
         if (!"hdfs".equalsIgnoreCase(configuredUri.getScheme())) {
             throw new ConfigException(
                 "Option '"
