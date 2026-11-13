@@ -31,24 +31,43 @@ public class K8sClientManager {
     private static final int CONNECT_TIMEOUT = 10_000;
     private static final int REQUEST_TIMEOUT = 20_000;
 
+    /**
+     * Short request timeout for metrics.k8s.io calls: when metrics-server is missing the aggregated
+     * API hangs, and a full-length timeout would stall every monitor response on it.
+     */
+    private static final int METRICS_REQUEST_TIMEOUT = 5_000;
+
     private final ConcurrentHashMap<Long, KubernetesClient> clients = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, KubernetesClient> metricsClients = new ConcurrentHashMap<>();
 
     public KubernetesClient getOrCreate(Long clusterId, String kubeconfig) {
-        return clients.computeIfAbsent(clusterId, id -> buildClient(kubeconfig));
+        return clients.computeIfAbsent(clusterId, id -> buildClient(kubeconfig, REQUEST_TIMEOUT));
+    }
+
+    public KubernetesClient getOrCreateMetrics(Long clusterId, String kubeconfig) {
+        return metricsClients.computeIfAbsent(clusterId, id -> buildClient(kubeconfig, METRICS_REQUEST_TIMEOUT));
     }
 
     public void invalidate(Long clusterId) {
-        KubernetesClient client = clients.remove(clusterId);
-        if (client != null) {
-            client.close();
-        }
+        closeQuietly(clients.remove(clusterId));
+        closeQuietly(metricsClients.remove(clusterId));
     }
 
     /** Builds a throwaway client, used by connection test (no caching). */
     public KubernetesClient buildClient(String kubeconfig) {
+        return buildClient(kubeconfig, REQUEST_TIMEOUT);
+    }
+
+    private KubernetesClient buildClient(String kubeconfig, int requestTimeout) {
         Config config = Config.fromKubeconfig(kubeconfig);
         config.setConnectionTimeout(CONNECT_TIMEOUT);
-        config.setRequestTimeout(REQUEST_TIMEOUT);
+        config.setRequestTimeout(requestTimeout);
         return new KubernetesClientBuilder().withConfig(config).build();
+    }
+
+    private void closeQuietly(KubernetesClient client) {
+        if (client != null) {
+            client.close();
+        }
     }
 }

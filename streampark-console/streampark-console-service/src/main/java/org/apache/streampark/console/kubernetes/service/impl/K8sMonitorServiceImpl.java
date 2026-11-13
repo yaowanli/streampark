@@ -53,6 +53,7 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.metrics.v1beta1.NodeMetrics;
 import io.fabric8.kubernetes.api.model.metrics.v1beta1.PodMetrics;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -63,10 +64,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class K8sMonitorServiceImpl implements K8sMonitorService {
 
@@ -80,6 +91,21 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
         "6h", 6 * 3600L,
         "24h", 24 * 3600L,
         "7d", 7 * 86400L);
+
+    /** Hard wall-clock cap for a metrics.k8s.io call: the apiserver may hold a 503 for ~20s when
+     * metrics-server is down, and fabric8's socket timeouts cannot cut that short. */
+    private static final long METRICS_TIMEOUT_MS = 5_000;
+
+    /** After a metrics failure, skip further metrics calls for this long instead of paying the timeout each refresh. */
+    private static final long METRICS_BACKOFF_MS = 60_000;
+
+    private final ConcurrentMap<Long, Long> metricsBackoffUntil = new ConcurrentHashMap<>();
+
+    private final ExecutorService metricsExecutor = Executors.newFixedThreadPool(2, r -> {
+        Thread t = new Thread(r, "k8s-metrics");
+        t.setDaemon(true);
+        return t;
+    });
 
     @Autowired
     private K8sClientManager k8sClientManager;
@@ -96,6 +122,42 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
     @VisibleForTesting
     public void setK8sClientManager(K8sClientManager k8sClientManager) {
         this.k8sClientManager = k8sClientManager;
+    }
+
+    /**
+     * Runs a metrics.k8s.io call under a hard wall-clock cap. When metrics-server is missing the
+     * apiserver may hold the request for ~20s before answering 503, which no client socket timeout
+     * reliably cuts short, so the call runs on a worker thread bounded by future.get(). Failures
+     * arm a per-cluster backoff so subsequent refreshes skip the call entirely. Returns null when
+     * metrics are unavailable.
+     */
+    private <T> T metricsCall(K8sCluster cluster, Function<KubernetesClient, T> call) {
+        Long clusterId = cluster.getId();
+        Long until = metricsBackoffUntil.get(clusterId);
+        if (until != null && until > System.currentTimeMillis()) {
+            return null;
+        }
+        KubernetesClient metricsClient =
+            k8sClientManager.getOrCreateMetrics(clusterId, cluster.getKubeconfig());
+        Future<T> future = metricsExecutor.submit(() -> call.apply(metricsClient));
+        try {
+            return future.get(METRICS_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            future.cancel(true);
+            log.warn("metrics.k8s.io call timed out after {}ms for cluster {}, backing off for {}ms",
+                METRICS_TIMEOUT_MS, clusterId, METRICS_BACKOFF_MS);
+            metricsBackoffUntil.put(clusterId, System.currentTimeMillis() + METRICS_BACKOFF_MS);
+            return null;
+        } catch (ExecutionException e) {
+            log.warn("metrics.k8s.io call failed for cluster {}, backing off for {}ms: {}",
+                clusterId, METRICS_BACKOFF_MS, e.getCause().getMessage());
+            metricsBackoffUntil.put(clusterId, System.currentTimeMillis() + METRICS_BACKOFF_MS);
+            return null;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            future.cancel(true);
+            return null;
+        }
     }
 
     // ---------- overview ----------
@@ -124,14 +186,15 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
         resp.setCpuAllocatableMillis(cpuAlloc);
         resp.setMemAllocatableBytes(memAlloc);
 
-        try {
-            List<NodeMetrics> nodeMetrics = client.top().nodes().metrics().getItems();
+        List<NodeMetrics> nodeMetrics = metricsCall(cluster,
+            c -> c.top().nodes().metrics().getItems());
+        if (nodeMetrics != null) {
             resp.setCpuUsedMillis(nodeMetrics.stream()
                 .mapToLong(m -> K8sQuantityUtils.cpuToMillis(m.getUsage().get("cpu"))).sum());
             resp.setMemUsedBytes(nodeMetrics.stream()
                 .mapToLong(m -> K8sQuantityUtils.memoryToBytes(m.getUsage().get("memory"))).sum());
             resp.setMetricsServerAvailable(true);
-        } catch (Exception e) {
+        } else {
             // metrics-server missing or unavailable: degrade to state-only view
             resp.setCpuUsedMillis(-1L);
             resp.setMemUsedBytes(-1L);
@@ -145,9 +208,12 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
     public List<NodeResponse> nodes(K8sCluster cluster) {
         KubernetesClient client = k8sClientManager.getOrCreate(cluster.getId(), cluster.getKubeconfig());
         List<Node> nodes = client.nodes().list().getItems();
-        Map<String, NodeMetrics> metricsByName = safeMap(() -> client.top().nodes().metrics().getItems()
-            .stream()
-            .collect(Collectors.toMap(m -> m.getMetadata().getName(), m -> m, (a, b) -> a)));
+        List<NodeMetrics> metricsList = metricsCall(cluster,
+            c -> c.top().nodes().metrics().getItems());
+        Map<String, NodeMetrics> metricsByName = metricsList == null
+            ? Map.of()
+            : metricsList.stream()
+                .collect(Collectors.toMap(m -> m.getMetadata().getName(), m -> m, (a, b) -> a));
         return nodes.stream().map(node -> {
             NodeResponse r = new NodeResponse();
             r.setName(node.getMetadata().getName());
@@ -224,12 +290,16 @@ public class K8sMonitorServiceImpl implements K8sMonitorService {
             ? client.pods().inAnyNamespace().list().getItems()
             : client.pods().inNamespace(namespace).list().getItems();
         // metrics lookup scoped to the same namespace when one is given
-        Map<String, PodMetrics> podMetrics = safeMap(() -> (StringUtils.isBlank(namespace)
-            ? client.top().pods().metrics().getItems()
-            : client.top().pods().inNamespace(namespace).metrics().getItems()).stream()
+        List<PodMetrics> podMetricsList = metricsCall(cluster,
+            c -> StringUtils.isBlank(namespace)
+                ? c.top().pods().metrics().getItems()
+                : c.top().pods().inNamespace(namespace).metrics().getItems());
+        Map<String, PodMetrics> podMetrics = podMetricsList == null
+            ? Map.of()
+            : podMetricsList.stream()
                 .collect(Collectors.toMap(
                     m -> m.getMetadata().getNamespace() + "/" + m.getMetadata().getName(),
-                    m -> m, (a, b) -> a)));
+                    m -> m, (a, b) -> a));
         return list.stream()
             .filter(p -> StringUtils.isBlank(keyword)
                 || p.getMetadata().getName().contains(keyword))

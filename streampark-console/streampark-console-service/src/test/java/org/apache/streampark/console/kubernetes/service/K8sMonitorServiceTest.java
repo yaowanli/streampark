@@ -49,7 +49,16 @@ class K8sMonitorServiceTest {
         K8sClientManager mockManager = new K8sClientManager() {
 
             @Override
-            public io.fabric8.kubernetes.client.KubernetesClient buildClient(String kubeconfig) {
+            public io.fabric8.kubernetes.client.KubernetesClient getOrCreate(
+                                                                             Long clusterId,
+                                                                             String kubeconfig) {
+                return server.getClient();
+            }
+
+            @Override
+            public io.fabric8.kubernetes.client.KubernetesClient getOrCreateMetrics(
+                                                                                    Long clusterId,
+                                                                                    String kubeconfig) {
                 return server.getClient();
             }
         };
