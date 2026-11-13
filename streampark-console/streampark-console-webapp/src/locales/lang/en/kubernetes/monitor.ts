@@ -37,6 +37,8 @@ export default {
   deployMode: 'Deploy Mode',
   session: 'Session',
   application: 'Application',
-  empty: 'No data',
+  empty:
+    'No StreamPark-managed Flink apps on this cluster. Apps submitted through StreamPark (K8S session / application mode) will appear here.',
+  abnormalPods: 'Pending / Failed Pods',
   noCluster: 'No kubernetes cluster registered yet. Register one in Settings → K8S Clusters first.',
 };

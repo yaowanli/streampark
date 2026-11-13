@@ -45,7 +45,11 @@
         {
           type: 'pie',
           radius: ['55%', '75%'],
-          label: { show: true, position: 'center', formatter: `${pct}%` },
+          label: {
+            show: true,
+            position: 'center',
+            formatter: props.used < 0 ? '—' : `${pct}%`,
+          },
           data: [
             { value: used, name: 'Used', itemStyle: { color: '#3b82f6' } },
             {

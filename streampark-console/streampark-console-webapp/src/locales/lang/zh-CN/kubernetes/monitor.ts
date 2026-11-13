@@ -37,6 +37,8 @@ export default {
   deployMode: '部署模式',
   session: 'Session',
   application: 'Application',
-  empty: '暂无数据',
+  empty:
+    '当前集群暂无 StreamPark 管理的 Flink 应用，通过 StreamPark 提交的 K8S Session / Application 作业会显示在这里',
+  abnormalPods: 'Pending / Failed Pods',
   noCluster: '尚未注册 K8S 集群，请先到「设置中心 → K8S 集群」注册',
 };

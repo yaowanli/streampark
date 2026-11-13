@@ -53,7 +53,7 @@
       <ACol :span="6">
         <ACard size="small">
           <AStatistic
-            title="Pods"
+            :title="t('kubernetes.monitor.abnormalPods')"
             :value="`${overview?.podsPending ?? 0} / ${overview?.podsFailed ?? 0}`"
             :value-style="{ fontSize: '20px' }"
           />
