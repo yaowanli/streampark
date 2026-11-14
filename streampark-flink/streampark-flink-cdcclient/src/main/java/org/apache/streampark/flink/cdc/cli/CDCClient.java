@@ -79,7 +79,8 @@ public final class CDCClient {
             configMap.putAll(parseYamlText(DeflaterUtils.unzipString(flinkConf)));
         }
 
-        String appConf = parameters.get(ApplicationOptions.CONFIG);
+        // a cdc yaml job runs fine without an extra application config, so conf is optional
+        String appConf = parameters.getOptional(ApplicationOptions.CONFIG).orElse(null);
         if (appConf != null && appConf.startsWith(YAML_PREFIX)) {
             configMap.putAll(parseYamlText(DeflaterUtils.unzipString(appConf.substring(YAML_PREFIX.length()))));
         }
