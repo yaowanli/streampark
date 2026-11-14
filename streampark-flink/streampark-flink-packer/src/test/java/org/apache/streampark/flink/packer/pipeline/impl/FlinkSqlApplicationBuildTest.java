@@ -150,8 +150,10 @@ class FlinkSqlApplicationBuildTest {
                                                boolean checkLocalImageFirst) {
                 // Verify the build context without contacting a Docker daemon or registry.
                 assertThat(dockerfile).isFile();
-                assertThat(Path.of(buildWorkspace, "lib", "snakeyaml-2.0.jar")).isRegularFile();
                 assertThat(Path.of(buildWorkspace, "lib", "connector.jar")).isRegularFile();
+                // snakeyaml is shaded into the usrlib fat jar; it must not also land in
+                // $FLINK_HOME/lib where it would shadow the flink-dist version
+                assertThat(Path.of(buildWorkspace, "lib", "snakeyaml-2.0.jar")).doesNotExist();
             }
         };
         DockerImageBuildResponse result = pipeline.buildProcess();

@@ -58,7 +58,7 @@ public class FlinkYarnApplicationBuildPipeline extends BuildPipeline {
     public ShadedBuildResponse buildProcess() {
         if (!request.flinkJobType().isSqlLike()) {
             runYarnSqlBuildSteps(
-                request.localWorkspace(),
+                request.workspace(),
                 request.yarnProvidedPath(),
                 request.flinkJobType() == FlinkJobType.PYFLINK,
                 request.dependencyInfo());
@@ -66,7 +66,9 @@ public class FlinkYarnApplicationBuildPipeline extends BuildPipeline {
         }
 
         execStep(1, () -> {
-            LfsOperator.mkCleanDirs(request.workspace());
+            // workspace() is the app's local home for sql-like jobs: wiping it whole would
+            // destroy the previous fat jar before the new build is known to succeed
+            LfsOperator.mkCleanDirs(request.workspace() + "/lib");
             HdfsOperator.mkCleanDirs(request.yarnProvidedPath());
             return null;
         });

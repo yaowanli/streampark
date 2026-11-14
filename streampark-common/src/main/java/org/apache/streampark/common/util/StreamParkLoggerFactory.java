@@ -108,11 +108,8 @@ public final class StreamParkLoggerFactory implements LoggerFactoryBinder {
                     String text =
                         LOGGING_PACKAGE.matcher(new String(resource.readAllBytes(), StandardCharsets.UTF_8))
                             .replaceAll(SHADED_PACKAGE + ".$1");
-                    try (
-                        ByteArrayInputStream input =
-                            new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8))) {
-                        configurator.doConfigure(input);
-                    }
+                    configurator.doConfigure(
+                        new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)));
                 } catch (Exception e) {
                     throw new LogbackException("Failed to configure logger context from " + url, e);
                 }

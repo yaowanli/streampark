@@ -62,10 +62,6 @@ public class FlinkYarnApplicationBuildRequest implements FlinkBuildParam {
         return mainClass;
     }
 
-    public String localWorkspace() {
-        return localWorkspace;
-    }
-
     @Override
     public String workspace() {
         return localWorkspace;

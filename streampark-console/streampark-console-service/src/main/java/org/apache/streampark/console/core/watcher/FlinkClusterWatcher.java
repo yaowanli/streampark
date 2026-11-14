@@ -198,6 +198,12 @@ public class FlinkClusterWatcher {
         switch (flinkCluster.getFlinkDeployModeEnum()) {
             case REMOTE:
             case KUBERNETES_NATIVE_SESSION:
+                // a k8s session cluster only gets its rest address after a successful start;
+                // probing before that would NPE on the null address
+                if (flinkCluster.getFlinkDeployModeEnum() == FlinkDeployMode.KUBERNETES_NATIVE_SESSION
+                    && StringUtils.isBlank(flinkCluster.getAddress())) {
+                    return ClusterState.CREATED;
+                }
                 return httpRemoteClusterState(flinkCluster);
             case YARN_SESSION:
                 return httpYarnSessionClusterState(flinkCluster);

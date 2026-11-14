@@ -24,7 +24,6 @@ import org.apache.streampark.flink.packer.docker.DockerConf;
 import org.apache.streampark.flink.packer.docker.FlinkDockerfileTemplate;
 import org.apache.streampark.flink.packer.docker.FlinkDockerfileTemplateTrait;
 import org.apache.streampark.flink.packer.docker.FlinkHadoopDockerfileTemplate;
-import org.apache.streampark.flink.packer.maven.FlinkSqlDependencySupport;
 import org.apache.streampark.flink.packer.maven.MavenTool;
 import org.apache.streampark.flink.packer.pipeline.DockerImageBuildResponse;
 import org.apache.streampark.flink.packer.pipeline.FlinkK8sApplicationBuildRequest;
@@ -34,7 +33,6 @@ import org.apache.streampark.flink.packer.pipeline.PipelineTypeEnum;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -101,10 +99,11 @@ public class FlinkK8sApplicationBuildPipeline extends AbstractK8sApplicationBuil
             execStep(
                 4,
                 () -> {
-                    Set<String> extJarLibs = new HashSet<>(request.dependencyInfo().extJarLibs());
-                    if (request.flinkJobType().isSqlLike()) {
-                        extJarLibs.addAll(FlinkSqlDependencySupport.resolveRuntimeJars());
-                    }
+                    // sql-like runtime deps (e.g. snakeyaml) are already shaded into the
+                    // usrlib fat jar by providedLibs(); do NOT also copy them into
+                    // $FLINK_HOME/lib, where they would shadow the flink-dist version
+                    // for the parent classloader (breaking API on Flink 1.x dists)
+                    Set<String> extJarLibs = request.dependencyInfo().extJarLibs();
                     FlinkDockerfileTemplateTrait template;
                     if (request.integrateWithHadoop()) {
                         template =
